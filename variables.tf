@@ -10,7 +10,7 @@ variable "key_pair_name" {
   default     = "my-key-pair"
 }
 
-variable " aws_vpc_id" {
+variable "aws_vpc_id" {
   description = "The ID of the VPC"
   type        = string
   default     = "vpc-12345678"
