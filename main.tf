@@ -1,170 +1,141 @@
-#Ec2 Instance
+﻿##############################################################
+# FILE 1: main.tf — AWS VPC Networking Foundation
+# Use-case: Provision a production-grade VPC with public &
+#            private subnets, Internet Gateway, and NAT Gateway.
+##############################################################
 
-resource "aws_instance" "my_ec2" {
-  ami           = "ami-0c55b159cbfafe1f0"
-  instance_type = "t2.micro"
-  tags = {
-    Name = "MyEC2Instance"
-  }
-}
+terraform {
+  required_version = ">= 1.5.0"
 
-#VPC
-resource "aws_vpc" "my_vpc" {
-  ami           = "ami-0c55b159cbfafe1f0"
-  instance_type = "t2.micro"
-  subnet_id     = "subnet-0bb1c79de3EXAMPLE"
-  key_name      = "my-key"
-
-  tags = {
-    Name = "MyVPC"
-  }
-}
-
-#subnet
-
-resource "aws_subnet" "my_subnet"{
-    vpc_id = aws_vpc.main.id
-    cidr_block = "0.0.0.0/16 "
-    availability_zone = "us-east-1a"
-    map_public_ip_on_launch = true
-
-    tags = {
-        Name = "MySubnet"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
     }
-}
+  }
 
-#internet gateway
-
-resource "aws_internet_gateway" "my_igw" {
-  vpc_id = aws_vpc.main.id
-
-  tags = {
-    Name = "MyInternetGateway"
+  backend "s3" {
+    bucket         = "my-company-terraform-state"
+    key            = "networking/vpc/terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "terraform-state-lock"
+    encrypt        = true
   }
 }
 
-#route table
+provider "aws" {
+  region = var.aws_region
 
-resource "aws_route_table" "my_route_table" {
+  default_tags {
+    tags = {
+      ManagedBy   = "Terraform"
+      Environment = var.environment
+      Project     = var.project_name
+      CostCenter  = var.cost_center
+    }
+  }
+}
+
+# ─── Variables ───────────────────────────────────────────────
+variable "aws_region"   { default = "us-east-1" }
+variable "environment"  { default = "production" }
+variable "project_name" { default = "my-company-app" }
+variable "cost_center"  { default = "engineering" }
+variable "vpc_cidr"     { default = "10.0.0.0/16" }
+
+variable "public_subnet_cidrs" {
+  default = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+}
+
+variable "private_subnet_cidrs" {
+  default = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+}
+
+# ─── Data Sources ────────────────────────────────────────────
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+# ─── VPC ─────────────────────────────────────────────────────
+resource "aws_vpc" "main" {
+  cidr_block           = var.vpc_cidr
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+  tags = { Name = "${var.project_name}-vpc-${var.environment}" }
+}
+
+# ─── Internet Gateway ─────────────────────────────────────────
+resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
+  tags   = { Name = "${var.project_name}-igw" }
+}
 
+# ─── Public Subnets ───────────────────────────────────────────
+resource "aws_subnet" "public" {
+  count                   = length(var.public_subnet_cidrs)
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.public_subnet_cidrs[count.index]
+  availability_zone       = data.aws_availability_zones.available.names[count.index]
+  map_public_ip_on_launch = true
+  tags = { Name = "${var.project_name}-public-${count.index + 1}" }
+}
+
+# ─── Private Subnets ──────────────────────────────────────────
+resource "aws_subnet" "private" {
+  count             = length(var.private_subnet_cidrs)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.private_subnet_cidrs[count.index]
+  availability_zone = data.aws_availability_zones.available.names[count.index]
+  tags = { Name = "${var.project_name}-private-${count.index + 1}" }
+}
+
+# ─── Elastic IP & NAT Gateway ─────────────────────────────────
+resource "aws_eip" "nat" {
+  domain     = "vpc"
+  depends_on = [aws_internet_gateway.main]
+  tags       = { Name = "${var.project_name}-nat-eip" }
+}
+
+resource "aws_nat_gateway" "main" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public[0].id
+  depends_on    = [aws_internet_gateway.main]
+  tags          = { Name = "${var.project_name}-nat-gw" }
+}
+
+# ─── Route Tables ─────────────────────────────────────────────
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.my_igw.id
+    gateway_id = aws_internet_gateway.main.id
   }
+  tags = { Name = "${var.project_name}-public-rt" }
+}
 
-  tags = {
-    Name = "MyRouteTable"
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.main.id
   }
+  tags = { Name = "${var.project_name}-private-rt" }
 }
 
-#route table association
-
-resoure "aws_route_association" "public"{
-    subnet_id = aws_subnet.public.id
-    route_table_id = aws_route_table.public.id
-
+resource "aws_route_table_association" "public" {
+  count          = length(aws_subnet.public)
+  subnet_id      = aws_subnet.public[count.index].id
+  route_table_id = aws_route_table.public.id
 }
 
-#security group
-
-resource "aws_security_group" "my_sg" {
-  name        = "my-security-group"
-  description = "Allow SSH and HTTP traffic"
-  vpc_id      = aws_vpc.main.id
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-    ingress {
-        from_port   = 80
-        to_port     = 80
-        protocol    = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
-
-    egress {
-        from_port   = 0
-        to_port     = 0
-        protocol    = "-1"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
-
-    tags = {
-        Name = "MySecurityGroup"
-    }
+resource "aws_route_table_association" "private" {
+  count          = length(aws_subnet.private)
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.private.id
 }
 
-#security group association
-
-resource "aws_security_group_rule" "my_sg_rule" {
-    security_group_id = aws_security_group.my_sg.id
-    type = "ingress"
-    from_port = 22
-    to_port = 22
-    protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-}
-
-#key pair
-
-resource "aws_key_pair" "my_key_pair" {
-    key_name = "my-key-pair"
-    public_key = file("~/.ssh/id_rsa.pub")"
-}
-
-#IAM role
-
-resources "aws_iam_role" "my_iam_role" {
-    name = "my-iam-role"
-    assume_role_policy = jsonencode({
-        Version = "2025-7-17"
-        Statement = [
-            {
-                Action = "sts:AssumeRole"
-                Effect = "Allow"
-                Principal = {
-                    Service = "ec2.amazonaws.com"
-                }
-            }
-        ]
-    })
-}
-
-#IAM User
-
-resource "aws_iam_user" "my_iam_user" {
-    name = "my-iam-user"
-}
-
-#IAM Policy
-
-resource "aws_iam_policy" "my_iam_policy" {
-    name = "my-iam-policy"
-    policy = jsonencode({
-        Version = "2025-7-17"
-        Statement = [
-            {
-                Action = "ec2:*"
-                Effect = "Allow"
-                Resource = "*"
-            }
-        ]
-    })
-}
-
-#s3 bucket
-
-resource "aws_s3_bucket" "my_s3_bucket" {
-    bucket = "my-s3-bucket"
-    acl    = "private"
-
-    tags = {
-        Name = "MyS3Bucket"
-    }
-}
-
+# ─── Outputs ──────────────────────────────────────────────────
+output "vpc_id"             { value = aws_vpc.main.id }
+output "public_subnet_ids"  { value = aws_subnet.public[*].id }
+output "private_subnet_ids" { value = aws_subnet.private[*].id }
+output "nat_gateway_ip"     { value = aws_eip.nat.public_ip }
