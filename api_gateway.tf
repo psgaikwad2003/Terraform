@@ -141,6 +141,15 @@ resource "aws_api_gateway_stage" "prod_stage" {
 
   access_log_settings {
     destination_arn = aws_cloudwatch_log_group.api_gw_logs.arn
+    format = jsonencode({
+      requestId      = "$context.requestId"
+      ip             = "$context.identity.sourceIp"
+      requestTime    = "$context.requestTime"
+      httpMethod     = "$context.httpMethod"
+      resourcePath   = "$context.resourcePath"
+      status         = "$context.status"
+      responseLength = "$context.responseLength"
+    })
   }
 
   xray_tracing_enabled = true
@@ -151,11 +160,26 @@ resource "aws_api_gateway_stage" "prod_stage" {
   }
 }
 
+# Method settings for rate limiting and metrics
+resource "aws_api_gateway_method_settings" "all_methods" {
+  rest_api_id = aws_api_gateway_rest_api.main_api.id
+  stage_name  = aws_api_gateway_stage.prod_stage.stage_name
+  method_path = "*/*"
+
+  settings {
+    metrics_enabled        = true
+    logging_level          = "INFO"
+    throttling_burst_limit = 500
+    throttling_rate_limit  = 1000
+  }
+}
+
 # CloudWatch Log Group for API Gateway
 resource "aws_cloudwatch_log_group" "api_gw_logs" {
   name              = "/aws/api-gateway/${aws_api_gateway_rest_api.main_api.name}"
   retention_in_days = 14
 }
+
 
 # ─────────────────────────────────────────────
 #  Outputs
