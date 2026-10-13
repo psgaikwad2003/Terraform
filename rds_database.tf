@@ -1,4 +1,4 @@
-﻿##############################################################
+##############################################################
 # FILE 5: rds_database.tf — RDS PostgreSQL with Read Replica
 # Use-case: Provision a managed database cluster with Multi-AZ
 #            for high availability, automated backups, read
@@ -144,8 +144,13 @@ resource "aws_db_instance" "primary" {
   monitoring_role_arn = aws_iam_role.rds_monitoring.arn
 
   auto_minor_version_upgrade = true
+  copy_tags_to_snapshot      = true
 
-  tags = { Name = "${var.project_name}-rds-primary" }
+  tags = {
+    Name        = "${var.project_name}-rds-primary"
+    Environment = "production"
+    ManagedBy   = "terraform"
+  }
 }
 
 # ─── Read Replica (for reporting/analytics queries) ───────────
@@ -160,14 +165,20 @@ resource "aws_db_instance" "replica" {
   parameter_group_name   = aws_db_parameter_group.postgres.name
 
   auto_minor_version_upgrade = true
+  copy_tags_to_snapshot      = true
   skip_final_snapshot        = true
 
   performance_insights_enabled = true
   monitoring_interval          = 60
   monitoring_role_arn          = aws_iam_role.rds_monitoring.arn
 
-  tags = { Name = "${var.project_name}-rds-replica" }
+  tags = {
+    Name        = "${var.project_name}-rds-replica"
+    Environment = "production"
+    ManagedBy   = "terraform"
+  }
 }
+
 
 # ─── Enhanced Monitoring Role ─────────────────────────────────
 resource "aws_iam_role" "rds_monitoring" {
