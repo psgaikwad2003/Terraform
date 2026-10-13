@@ -31,6 +31,12 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_exec" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+# Attach AWS X-Ray daemon write policy for tracing
+resource "aws_iam_role_policy_attachment" "lambda_xray" {
+  role       = aws_iam_role.lambda_exec_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
+}
+
 # Attach DynamoDB access policy for Lambda
 resource "aws_iam_role_policy" "lambda_dynamodb_policy" {
   name = "lambda-dynamodb-access"
@@ -63,8 +69,10 @@ resource "aws_lambda_function" "get_items" {
   role          = aws_iam_role.lambda_exec_role.arn
   handler       = "index.handler"
   runtime       = "nodejs20.x"
+  architectures = ["arm64"]
   timeout       = 30
   memory_size   = 256
+
 
   filename         = "get_items.zip"
   source_code_hash = filebase64sha256("get_items.zip")
