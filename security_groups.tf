@@ -187,3 +187,32 @@ resource "aws_security_group" "efs_sg" {
     Environment = "production"
   }
 }
+
+# ElastiCache Redis Security Group - In-memory caching tier
+resource "aws_security_group" "redis_sg" {
+  name        = "redis-security-group"
+  description = "Security group for ElastiCache Redis cluster"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description     = "Redis port from web tier"
+    from_port       = 6379
+    to_port         = 6379
+    protocol        = "tcp"
+    security_groups = [aws_security_group.web_sg.id]
+  }
+
+  egress {
+    description = "Allow outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "redis-sg"
+    Environment = "production"
+  }
+}
+
