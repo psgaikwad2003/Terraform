@@ -67,6 +67,23 @@ resource "aws_s3_bucket_cors_configuration" "assets" {
   }
 }
 
+# Intelligent-Tiering to optimize storage costs automatically
+resource "aws_s3_bucket_intelligent_tiering_configuration" "assets_tiering" {
+  bucket = aws_s3_bucket.assets.id
+  name   = "EntireBucketIntelligentTiering"
+
+  tiering {
+    access_tier = "ARCHIVE_ACCESS"
+    days        = 90
+  }
+
+  tiering {
+    access_tier = "DEEP_ARCHIVE_ACCESS"
+    days        = 180
+  }
+}
+
+
 # ══════════════════════════════════════════════════════════════
 # 2. Access Logs Bucket (private, lifecycle auto-cleanup)
 # ══════════════════════════════════════════════════════════════
