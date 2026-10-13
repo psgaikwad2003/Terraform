@@ -241,6 +241,22 @@ resource "aws_autoscaling_policy" "cpu_tracking" {
   }
 }
 
+# ─── Auto Scaling Policy (ALB Request Count based) ───────────
+resource "aws_autoscaling_policy" "alb_request_count" {
+  name                   = "${var.project_name}-alb-request-count-policy"
+  autoscaling_group_name = aws_autoscaling_group.app.name
+  policy_type            = "TargetTrackingScaling"
+
+  target_tracking_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ALBRequestCountPerTarget"
+      resource_label         = "${aws_lb.main.arn_suffix}/${aws_lb_target_group.app.arn_suffix}"
+    }
+    target_value = 1000.0
+  }
+}
+
+
 # ─── Outputs ──────────────────────────────────────────────────
 output "alb_dns_name"    { value = aws_lb.main.dns_name }
 output "asg_name"        { value = aws_autoscaling_group.app.name }
