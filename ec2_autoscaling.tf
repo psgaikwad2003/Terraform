@@ -1,4 +1,4 @@
-﻿##############################################################
+##############################################################
 # FILE 2: ec2_autoscaling.tf — EC2 Auto Scaling Group
 # Use-case: Deploy a self-healing, auto-scaling fleet of web
 #            servers behind an Application Load Balancer.
@@ -129,6 +129,17 @@ resource "aws_launch_template" "app" {
     }
   }
 
+  monitoring {
+    enabled = true
+  }
+
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 1
+    instance_metadata_tags      = "enabled"
+  }
+
   user_data = base64encode(<<-EOF
     #!/bin/bash
     yum update -y
@@ -139,6 +150,7 @@ resource "aws_launch_template" "app" {
     echo "Server ready" > /var/www/html/health
   EOF
   )
+
 
   tag_specifications {
     resource_type = "instance"
