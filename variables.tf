@@ -27,3 +27,21 @@ variable "enable_dns_support" {
   type        = bool
   default     = true
 }
+
+variable "environment" {
+  description = "Deployment environment name (e.g., dev, staging, prod)"
+  type        = string
+  default     = "production"
+}
+
+variable "project_name" {
+  description = "Name of the project used for resource naming and tagging"
+  type        = string
+  default     = "my-app"
+}
+
+variable "vpc_cidr" {
+  description = "CIDR block for the primary Virtual Private Cloud"
+  type        = string
+  default     = "10.0.0.0/16"
+}
