@@ -191,3 +191,21 @@ resource "aws_iam_role_policy" "flow_log_policy" {
     }]
   })
 }
+
+# S3 VPC Gateway Endpoint
+resource "aws_vpc_endpoint" "s3_endpoint" {
+  vpc_id            = aws_vpc.main.id
+  service_name      = "com.amazonaws.us-east-1.s3"
+  vpc_endpoint_type = "Gateway"
+
+  route_table_ids = [
+    aws_route_table.public_rt.id,
+    aws_route_table.private_rt.id
+  ]
+
+  tags = {
+    Name        = "main-s3-gateway-endpoint"
+    Environment = "production"
+  }
+}
+
