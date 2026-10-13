@@ -29,6 +29,9 @@ resource "aws_dynamodb_table" "items_table" {
     enabled = true
   }
 
+  # Prevent accidental deletion of production data
+  deletion_protection_enabled = true
+
   # Server-Side Encryption using AWS managed key
   server_side_encryption {
     enabled = true
@@ -45,6 +48,7 @@ resource "aws_dynamodb_table" "items_table" {
     Environment = "production"
   }
 }
+
 
 # ─────────────────────────────────────────────
 #  DynamoDB Auto-Scaling (optional, for on-demand
