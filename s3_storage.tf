@@ -1,4 +1,4 @@
-﻿##############################################################
+##############################################################
 # FILE 3: s3_storage.tf — S3 Buckets for Company Storage
 # Use-case: Create secure S3 buckets for app assets, logs,
 #            and backups with versioning, lifecycle rules,
@@ -181,10 +181,15 @@ resource "aws_s3_bucket_lifecycle_configuration" "backups" {
 # ─── Bucket Policy: Enforce HTTPS only ───────────────────────
 data "aws_iam_policy_document" "backups_policy" {
   statement {
-    sid       = "DenyHTTP"
-    effect    = "Deny"
-    principals { type = "*" identifiers = ["*"] }
-    actions   = ["s3:*"]
+    sid    = "DenyHTTP"
+    effect = "Deny"
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    actions = ["s3:*"]
     resources = [
       aws_s3_bucket.backups.arn,
       "${aws_s3_bucket.backups.arn}/*"
@@ -201,6 +206,17 @@ resource "aws_s3_bucket_policy" "backups" {
   bucket = aws_s3_bucket.backups.id
   policy = data.aws_iam_policy_document.backups_policy.json
 }
+
+# ─── Public Access Block for Backups Bucket ──────────────────
+resource "aws_s3_bucket_public_access_block" "backups" {
+  bucket = aws_s3_bucket.backups.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 
 # ─── Outputs ──────────────────────────────────────────────────
 output "assets_bucket_name"  { value = aws_s3_bucket.assets.id }
