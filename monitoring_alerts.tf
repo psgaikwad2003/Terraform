@@ -1,4 +1,4 @@
-﻿##############################################################
+##############################################################
 # FILE 6: monitoring_alerts.tf — CloudWatch Monitoring & Alerts
 # Use-case: Set up dashboards, alarms for CPU/memory/DB/ALB,
 #            SNS notifications to Slack/email, and budget alerts.
@@ -193,6 +193,29 @@ resource "aws_cloudwatch_metric_alarm" "rds_connections" {
 }
 
 # ═══════════════════════════════════════════════════════════════
+# ECS Service Alarms
+# ═══════════════════════════════════════════════════════════════
+
+resource "aws_cloudwatch_metric_alarm" "ecs_memory_high" {
+  alarm_name          = "${var.project_name}-ecs-high-memory"
+  alarm_description   = "ECS Service memory utilization exceeded 85%"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "MemoryUtilization"
+  namespace           = "AWS/ECS"
+  period              = 60
+  statistic           = "Average"
+  threshold           = 85
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
+
+  dimensions = {
+    ClusterName = aws_ecs_cluster.main.name
+    ServiceName = aws_ecs_service.main_app.name
+  }
+}
+
+# ═══════════════════════════════════════════════════════════════
 # CloudWatch Dashboard
 # ═══════════════════════════════════════════════════════════════
 
@@ -203,7 +226,10 @@ resource "aws_cloudwatch_dashboard" "main" {
     widgets = [
       {
         type   = "metric"
-        x      = 0; y = 0; width = 12; height = 6
+        x      = 0
+        y      = 0
+        width  = 12
+        height = 6
         properties = {
           title  = "EC2 CPU Utilization"
           view   = "timeSeries"
@@ -216,7 +242,10 @@ resource "aws_cloudwatch_dashboard" "main" {
       },
       {
         type   = "metric"
-        x      = 12; y = 0; width = 12; height = 6
+        x      = 12
+        y      = 0
+        width  = 12
+        height = 6
         properties = {
           title  = "ALB Request Count & 5xx Errors"
           view   = "timeSeries"
@@ -229,7 +258,10 @@ resource "aws_cloudwatch_dashboard" "main" {
       },
       {
         type   = "metric"
-        x      = 0; y = 6; width = 12; height = 6
+        x      = 0
+        y      = 6
+        width  = 12
+        height = 6
         properties = {
           title  = "RDS CPU & Connections"
           view   = "timeSeries"
@@ -242,7 +274,10 @@ resource "aws_cloudwatch_dashboard" "main" {
       },
       {
         type   = "alarm"
-        x      = 12; y = 6; width = 12; height = 6
+        x      = 12
+        y      = 6
+        width  = 12
+        height = 6
         properties = {
           title = "Active Alarms"
           alarms = [
@@ -250,7 +285,8 @@ resource "aws_cloudwatch_dashboard" "main" {
             aws_cloudwatch_metric_alarm.alb_5xx_errors.arn,
             aws_cloudwatch_metric_alarm.unhealthy_hosts.arn,
             aws_cloudwatch_metric_alarm.rds_cpu.arn,
-            aws_cloudwatch_metric_alarm.rds_free_storage.arn
+            aws_cloudwatch_metric_alarm.rds_free_storage.arn,
+            aws_cloudwatch_metric_alarm.ecs_memory_high.arn
           ]
         }
       }
