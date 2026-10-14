@@ -33,6 +33,37 @@ resource "aws_cloudfront_cache_policy" "static_assets" {
   }
 }
 
+# Security Response Headers Policy
+resource "aws_cloudfront_response_headers_policy" "security_headers" {
+  name    = "security-headers-policy"
+  comment = "Enforces standard HTTP security response headers"
+
+  security_headers_config {
+    content_type_options {
+      override = true
+    }
+    frame_options {
+      frame_option = "DENY"
+      override     = true
+    }
+    referrer_policy {
+      referrer_policy = "strict-origin-when-cross-origin"
+      override        = true
+    }
+    strict_transport_security {
+      access_control_max_age_sec = 31536000
+      include_subdomains         = true
+      preload                    = true
+      override                   = true
+    }
+    xss_protection {
+      mode_block = true
+      protection = true
+      override   = true
+    }
+  }
+}
+
 # CloudFront Distribution
 resource "aws_cloudfront_distribution" "main_cdn" {
   enabled             = true
@@ -64,22 +95,24 @@ resource "aws_cloudfront_distribution" "main_cdn" {
 
   # Default cache behavior - serves from S3
   default_cache_behavior {
-    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = "S3-static-assets"
-    cache_policy_id        = aws_cloudfront_cache_policy.static_assets.id
-    viewer_protocol_policy = "redirect-to-https"
-    compress               = true
+    allowed_methods            = ["GET", "HEAD", "OPTIONS"]
+    cached_methods             = ["GET", "HEAD"]
+    target_origin_id           = "S3-static-assets"
+    cache_policy_id            = aws_cloudfront_cache_policy.static_assets.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers.id
+    viewer_protocol_policy     = "redirect-to-https"
+    compress                   = true
   }
 
   # API path behavior - forwards to API Gateway
   ordered_cache_behavior {
-    path_pattern           = "/api/*"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = "APIGateway-backend"
-    viewer_protocol_policy = "https-only"
-    compress               = true
+    path_pattern               = "/api/*"
+    allowed_methods            = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods             = ["GET", "HEAD"]
+    target_origin_id           = "APIGateway-backend"
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers.id
+    viewer_protocol_policy     = "https-only"
+    compress                   = true
 
     cache_policy_id = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" # CachingDisabled managed policy
 
