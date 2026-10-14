@@ -1,4 +1,4 @@
-﻿##############################################################
+##############################################################
 # FILE 4: iam_roles.tf — IAM Roles, Policies & Users
 # Use-case: Manage team permissions using least-privilege IAM.
 #            DevOps teams run this daily to onboard/off-board
@@ -194,6 +194,20 @@ resource "aws_iam_role_policy_attachment" "auditor_readonly" {
 resource "aws_iam_role_policy_attachment" "auditor_security" {
   role       = aws_iam_role.auditor_role.name
   policy_arn = "arn:aws:iam::aws:policy/SecurityAudit"
+}
+
+# ══════════════════════════════════════════════════════════════
+# Account Password Policy (CIS AWS Benchmark Compliant)
+# ══════════════════════════════════════════════════════════════
+resource "aws_iam_account_password_policy" "strict" {
+  minimum_password_length        = 14
+  require_lowercase_characters   = true
+  require_uppercase_characters   = true
+  require_numbers                = true
+  require_symbols                = true
+  allow_users_to_change_password = true
+  password_reuse_prevention      = 24
+  max_password_age               = 90
 }
 
 # ─── Outputs ──────────────────────────────────────────────────
