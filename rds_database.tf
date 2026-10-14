@@ -143,8 +143,9 @@ resource "aws_db_instance" "primary" {
   monitoring_interval = 60
   monitoring_role_arn = aws_iam_role.rds_monitoring.arn
 
-  auto_minor_version_upgrade = true
-  copy_tags_to_snapshot      = true
+  auto_minor_version_upgrade          = true
+  copy_tags_to_snapshot               = true
+  iam_database_authentication_enabled = true
 
   tags = {
     Name        = "${var.project_name}-rds-primary"
@@ -164,9 +165,10 @@ resource "aws_db_instance" "replica" {
   vpc_security_group_ids = [aws_security_group.rds.id]
   parameter_group_name   = aws_db_parameter_group.postgres.name
 
-  auto_minor_version_upgrade = true
-  copy_tags_to_snapshot      = true
-  skip_final_snapshot        = true
+  auto_minor_version_upgrade          = true
+  copy_tags_to_snapshot               = true
+  skip_final_snapshot                 = true
+  iam_database_authentication_enabled = true
 
   performance_insights_enabled = true
   monitoring_interval          = 60
