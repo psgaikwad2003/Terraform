@@ -1,34 +1,29 @@
-# ─────────────────────────────────────────────
-#  AWS API Gateway (REST API)
-# ─────────────────────────────────────────────
+##############################################################
+# api_gateway.tf — REST API Gateway & Lambda Integrations
+##############################################################
 
 # REST API
 resource "aws_api_gateway_rest_api" "main_api" {
-  name        = "main-rest-api"
-  description = "Main REST API for the serverless application"
+  name        = "${var.project_name}-rest-api"
+  description = "REST API gateway for serverless services"
 
   endpoint_configuration {
     types = ["REGIONAL"]
   }
 
   tags = {
-    Name        = "main-rest-api"
-    Environment = "production"
+    Name = "${var.project_name}-rest-api"
   }
 }
 
-# ─────────────────────────────────────────────
-#  Resource: /items
-# ─────────────────────────────────────────────
+# 1. Resource: /items
 resource "aws_api_gateway_resource" "items_resource" {
   rest_api_id = aws_api_gateway_rest_api.main_api.id
   parent_id   = aws_api_gateway_rest_api.main_api.root_resource_id
   path_part   = "items"
 }
 
-# ─────────────────────────────────────────────
-#  GET /items  → get_items Lambda
-# ─────────────────────────────────────────────
+# GET /items
 resource "aws_api_gateway_method" "get_items_method" {
   rest_api_id   = aws_api_gateway_rest_api.main_api.id
   resource_id   = aws_api_gateway_resource.items_resource.id
@@ -53,9 +48,7 @@ resource "aws_lambda_permission" "api_gw_get_items" {
   source_arn    = "${aws_api_gateway_rest_api.main_api.execution_arn}/*/*"
 }
 
-# ─────────────────────────────────────────────
-#  POST /items  → create_item Lambda
-# ─────────────────────────────────────────────
+# POST /items
 resource "aws_api_gateway_method" "post_items_method" {
   rest_api_id   = aws_api_gateway_rest_api.main_api.id
   resource_id   = aws_api_gateway_resource.items_resource.id
@@ -80,16 +73,14 @@ resource "aws_lambda_permission" "api_gw_create_item" {
   source_arn    = "${aws_api_gateway_rest_api.main_api.execution_arn}/*/*"
 }
 
-# ─────────────────────────────────────────────
-#  Resource: /items/{id}
-# ─────────────────────────────────────────────
+# 2. Resource: /items/{id}
 resource "aws_api_gateway_resource" "item_id_resource" {
   rest_api_id = aws_api_gateway_rest_api.main_api.id
   parent_id   = aws_api_gateway_resource.items_resource.id
   path_part   = "{id}"
 }
 
-# DELETE /items/{id}  → delete_item Lambda
+# DELETE /items/{id}
 resource "aws_api_gateway_method" "delete_item_method" {
   rest_api_id   = aws_api_gateway_rest_api.main_api.id
   resource_id   = aws_api_gateway_resource.item_id_resource.id
@@ -114,15 +105,20 @@ resource "aws_lambda_permission" "api_gw_delete_item" {
   source_arn    = "${aws_api_gateway_rest_api.main_api.execution_arn}/*/*"
 }
 
-# ─────────────────────────────────────────────
-#  API Deployment & Stage
-# ─────────────────────────────────────────────
+# Deployment & Stage
 resource "aws_api_gateway_deployment" "api_deployment" {
   rest_api_id = aws_api_gateway_rest_api.main_api.id
+
+  depends_on = [
+    aws_api_gateway_integration.get_items_integration,
+    aws_api_gateway_integration.post_items_integration,
+    aws_api_gateway_integration.delete_item_integration
+  ]
 
   triggers = {
     redeployment = sha1(jsonencode([
       aws_api_gateway_resource.items_resource.id,
+      aws_api_gateway_resource.item_id_resource.id,
       aws_api_gateway_method.get_items_method.id,
       aws_api_gateway_method.post_items_method.id,
       aws_api_gateway_method.delete_item_method.id,
@@ -134,10 +130,16 @@ resource "aws_api_gateway_deployment" "api_deployment" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "api_gw_logs" {
+  name              = "/aws/api-gateway/${var.project_name}-logs"
+  retention_in_days = 14
+}
+
 resource "aws_api_gateway_stage" "prod_stage" {
-  deployment_id = aws_api_gateway_deployment.api_deployment.id
-  rest_api_id   = aws_api_gateway_rest_api.main_api.id
-  stage_name    = "prod"
+  deployment_id        = aws_api_gateway_deployment.api_deployment.id
+  rest_api_id          = aws_api_gateway_rest_api.main_api.id
+  stage_name           = "prod"
+  xray_tracing_enabled = true
 
   access_log_settings {
     destination_arn = aws_cloudwatch_log_group.api_gw_logs.arn
@@ -152,15 +154,11 @@ resource "aws_api_gateway_stage" "prod_stage" {
     })
   }
 
-  xray_tracing_enabled = true
-
   tags = {
-    Name        = "prod-stage"
-    Environment = "production"
+    Name = "${var.project_name}-prod-stage"
   }
 }
 
-# Method settings for rate limiting and metrics
 resource "aws_api_gateway_method_settings" "all_methods" {
   rest_api_id = aws_api_gateway_rest_api.main_api.id
   stage_name  = aws_api_gateway_stage.prod_stage.stage_name
@@ -174,17 +172,18 @@ resource "aws_api_gateway_method_settings" "all_methods" {
   }
 }
 
-# CloudWatch Log Group for API Gateway
-resource "aws_cloudwatch_log_group" "api_gw_logs" {
-  name              = "/aws/api-gateway/${aws_api_gateway_rest_api.main_api.name}"
-  retention_in_days = 14
+# Outputs
+output "api_gateway_id" {
+  description = "REST API Gateway ID"
+  value       = aws_api_gateway_rest_api.main_api.id
 }
 
+output "api_gateway_stage_invoke_url" {
+  description = "Invoke URL for production stage"
+  value       = aws_api_gateway_stage.prod_stage.invoke_url
+}
 
-# ─────────────────────────────────────────────
-#  Outputs
-# ─────────────────────────────────────────────
 output "api_gateway_url" {
-  description = "Base URL of the deployed API Gateway"
+  description = "Items endpoint full URL"
   value       = "${aws_api_gateway_stage.prod_stage.invoke_url}/items"
 }
