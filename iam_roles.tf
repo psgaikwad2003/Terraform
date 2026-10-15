@@ -1,19 +1,26 @@
 ##############################################################
-# FILE 4: iam_roles.tf — IAM Roles, Policies & Users
-# Use-case: Manage team permissions using least-privilege IAM.
-#            DevOps teams run this daily to onboard/off-board
-#            developers, add service roles, and audit access.
+# iam_roles.tf — IAM Roles, Policies, and Security Controls
 ##############################################################
 
-# ══════════════════════════════════════════════════════════════
-# Developer Group & Users
-# ══════════════════════════════════════════════════════════════
 variable "developer_users" {
-  description = "List of developer IAM usernames to create"
+  description = "List of developer IAM usernames to provision"
   type        = list(string)
   default     = ["alice", "bob", "charlie"]
 }
 
+variable "github_org" {
+  description = "GitHub organization name for CI/CD OIDC trust"
+  type        = string
+  default     = "my-company"
+}
+
+variable "github_repo" {
+  description = "GitHub repository name for CI/CD OIDC trust"
+  type        = string
+  default     = "my-company-app"
+}
+
+# 1. Developer Group and User Memberships
 resource "aws_iam_group" "developers" {
   name = "${var.project_name}-developers"
 }
@@ -22,7 +29,7 @@ resource "aws_iam_user" "developers" {
   for_each      = toset(var.developer_users)
   name          = each.key
   force_destroy = true
-  tags          = { Team = "engineering", Environment = var.environment }
+  tags          = { Team = "engineering" }
 }
 
 resource "aws_iam_user_group_membership" "developers" {
@@ -31,10 +38,10 @@ resource "aws_iam_user_group_membership" "developers" {
   groups   = [aws_iam_group.developers.name]
 }
 
-# ─── Developer Policy: read-only prod, full-access dev ────────
+# Least-privilege Developer Policy
 resource "aws_iam_policy" "developer_policy" {
   name        = "${var.project_name}-developer-policy"
-  description = "Least-privilege policy for developers"
+  description = "Developer policy with read-only infra access"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -85,14 +92,7 @@ resource "aws_iam_group_policy_attachment" "developers" {
   policy_arn = aws_iam_policy.developer_policy.arn
 }
 
-# ══════════════════════════════════════════════════════════════
-# CI/CD Service Role (GitHub Actions / Jenkins)
-# ══════════════════════════════════════════════════════════════
-variable "github_org"  { default = "my-company" }
-variable "github_repo" { default = "my-company-app" }
-
-data "aws_caller_identity" "current" {}
-
+# 2. CI/CD Deployment Role (GitHub Actions OIDC)
 resource "aws_iam_role" "cicd_role" {
   name        = "${var.project_name}-cicd-role"
   description = "Role assumed by CI/CD pipeline"
@@ -101,7 +101,6 @@ resource "aws_iam_role" "cicd_role" {
     Version = "2012-10-17"
     Statement = [
       {
-        # GitHub Actions OIDC trust
         Effect = "Allow"
         Action = "sts:AssumeRoleWithWebIdentity"
         Principal = {
@@ -119,7 +118,7 @@ resource "aws_iam_role" "cicd_role" {
 
 resource "aws_iam_policy" "cicd_policy" {
   name        = "${var.project_name}-cicd-policy"
-  description = "Permissions needed by CI/CD to deploy"
+  description = "Deployment permissions for CI/CD"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -156,7 +155,7 @@ resource "aws_iam_policy" "cicd_policy" {
         Effect = "Allow"
         Action = ["s3:PutObject", "s3:DeleteObject", "s3:ListBucket"]
         Resource = [
-          "${aws_s3_bucket.assets.arn}",
+          aws_s3_bucket.assets.arn,
           "${aws_s3_bucket.assets.arn}/*"
         ]
       }
@@ -169,9 +168,7 @@ resource "aws_iam_role_policy_attachment" "cicd" {
   policy_arn = aws_iam_policy.cicd_policy.arn
 }
 
-# ══════════════════════════════════════════════════════════════
-# Read-Only Role for Auditors / Security Team
-# ══════════════════════════════════════════════════════════════
+# 3. Read-Only Auditor Role
 resource "aws_iam_role" "auditor_role" {
   name        = "${var.project_name}-auditor-role"
   description = "Read-only access for security auditors"
@@ -179,8 +176,8 @@ resource "aws_iam_role" "auditor_role" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect = "Allow"
-      Action = "sts:AssumeRole"
+      Effect    = "Allow"
+      Action    = "sts:AssumeRole"
       Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root" }
     }]
   })
@@ -196,9 +193,7 @@ resource "aws_iam_role_policy_attachment" "auditor_security" {
   policy_arn = "arn:aws:iam::aws:policy/SecurityAudit"
 }
 
-# ══════════════════════════════════════════════════════════════
-# Account Password Policy (CIS AWS Benchmark Compliant)
-# ══════════════════════════════════════════════════════════════
+# 4. CIS Compliant Account Password Policy
 resource "aws_iam_account_password_policy" "strict" {
   minimum_password_length        = 14
   require_lowercase_characters   = true
@@ -209,8 +204,3 @@ resource "aws_iam_account_password_policy" "strict" {
   password_reuse_prevention      = 24
   max_password_age               = 90
 }
-
-# ─── Outputs ──────────────────────────────────────────────────
-output "cicd_role_arn"    { value = aws_iam_role.cicd_role.arn }
-output "auditor_role_arn" { value = aws_iam_role.auditor_role.arn }
-output "developer_group"  { value = aws_iam_group.developers.name }
