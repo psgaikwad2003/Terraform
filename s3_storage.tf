@@ -1,31 +1,39 @@
 ##############################################################
-# FILE 3: s3_storage.tf — S3 Buckets for Company Storage
-# Use-case: Create secure S3 buckets for app assets, logs,
-#            and backups with versioning, lifecycle rules,
-#            and server-side encryption. Daily ops staple.
+# s3_storage.tf — S3 Buckets for Storage, Logs, and Backups
 ##############################################################
 
-# ─── Variables ───────────────────────────────────────────────
-variable "log_retention_days"    { default = 90 }
-variable "backup_retention_days" { default = 365 }
+variable "log_retention_days" {
+  description = "Days before access logs are permanently deleted"
+  type        = number
+  default     = 90
+}
 
-# ─── Random suffix to ensure globally unique names ───────────
+variable "backup_retention_days" {
+  description = "Days before backups are expired"
+  type        = number
+  default     = 365
+}
+
+# Unique suffix for globally unique S3 bucket names
 resource "random_id" "bucket_suffix" {
   byte_length = 4
 }
 
-# ══════════════════════════════════════════════════════════════
-# 1. Application Assets Bucket (public-readable static files)
-# ══════════════════════════════════════════════════════════════
+# 1. Application Assets Bucket
 resource "aws_s3_bucket" "assets" {
   bucket        = "${var.project_name}-assets-${random_id.bucket_suffix.hex}"
   force_destroy = false
-  tags          = { Purpose = "static-assets" }
+
+  tags = {
+    Purpose = "static-assets"
+  }
 }
 
 resource "aws_s3_bucket_versioning" "assets" {
   bucket = aws_s3_bucket.assets.id
-  versioning_configuration { status = "Enabled" }
+  versioning_configuration {
+    status = "Enabled"
+  }
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "assets" {
@@ -67,7 +75,6 @@ resource "aws_s3_bucket_cors_configuration" "assets" {
   }
 }
 
-# Intelligent-Tiering to optimize storage costs automatically
 resource "aws_s3_bucket_intelligent_tiering_configuration" "assets_tiering" {
   bucket = aws_s3_bucket.assets.id
   name   = "EntireBucketIntelligentTiering"
@@ -83,14 +90,14 @@ resource "aws_s3_bucket_intelligent_tiering_configuration" "assets_tiering" {
   }
 }
 
-
-# ══════════════════════════════════════════════════════════════
-# 2. Access Logs Bucket (private, lifecycle auto-cleanup)
-# ══════════════════════════════════════════════════════════════
+# 2. Access Logs Bucket
 resource "aws_s3_bucket" "logs" {
   bucket        = "${var.project_name}-logs-${random_id.bucket_suffix.hex}"
   force_destroy = false
-  tags          = { Purpose = "access-logs" }
+
+  tags = {
+    Purpose = "access-logs"
+  }
 }
 
 resource "aws_s3_bucket_public_access_block" "logs" {
@@ -133,14 +140,16 @@ resource "aws_s3_bucket_lifecycle_configuration" "logs" {
   }
 }
 
-# ══════════════════════════════════════════════════════════════
-# 3. Backup Bucket (with Object Lock for compliance)
-# ══════════════════════════════════════════════════════════════
+# 3. Compliance Backup Bucket
 resource "aws_s3_bucket" "backups" {
   bucket              = "${var.project_name}-backups-${random_id.bucket_suffix.hex}"
   object_lock_enabled = true
   force_destroy       = false
-  tags                = { Purpose = "backups", Compliance = "required" }
+
+  tags = {
+    Purpose    = "backups"
+    Compliance = "required"
+  }
 }
 
 resource "aws_s3_bucket_public_access_block" "backups" {
@@ -153,17 +162,8 @@ resource "aws_s3_bucket_public_access_block" "backups" {
 
 resource "aws_s3_bucket_versioning" "backups" {
   bucket = aws_s3_bucket.backups.id
-  versioning_configuration { status = "Enabled" }
-}
-
-resource "aws_s3_bucket_object_lock_configuration" "backups" {
-  bucket = aws_s3_bucket.backups.id
-
-  rule {
-    default_retention {
-      mode = "COMPLIANCE"
-      days = 30
-    }
+  versioning_configuration {
+    status = "Enabled"
   }
 }
 
@@ -195,7 +195,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "backups" {
   }
 }
 
-# ─── Bucket Policy: Enforce HTTPS only ───────────────────────
 data "aws_iam_policy_document" "backups_policy" {
   statement {
     sid    = "DenyHTTP"
@@ -223,20 +222,3 @@ resource "aws_s3_bucket_policy" "backups" {
   bucket = aws_s3_bucket.backups.id
   policy = data.aws_iam_policy_document.backups_policy.json
 }
-
-# ─── Public Access Block for Backups Bucket ──────────────────
-resource "aws_s3_bucket_public_access_block" "backups" {
-  bucket = aws_s3_bucket.backups.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-
-# ─── Outputs ──────────────────────────────────────────────────
-output "assets_bucket_name"  { value = aws_s3_bucket.assets.id }
-output "logs_bucket_name"    { value = aws_s3_bucket.logs.id }
-output "backups_bucket_name" { value = aws_s3_bucket.backups.id }
-output "assets_bucket_arn"   { value = aws_s3_bucket.assets.arn }
