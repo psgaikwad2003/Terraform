@@ -1,18 +1,38 @@
 ##############################################################
-# FILE 2: ec2_autoscaling.tf — EC2 Auto Scaling Group
-# Use-case: Deploy a self-healing, auto-scaling fleet of web
-#            servers behind an Application Load Balancer.
-#            Used daily for app deployments & capacity changes.
+# ec2_autoscaling.tf — EC2 Auto Scaling Fleet & ALB
 ##############################################################
 
-# ─── Variables ───────────────────────────────────────────────
-variable "instance_type"    { default = "t3.medium" }
-variable "desired_capacity" { default = 2 }
-variable "min_size"         { default = 1 }
-variable "max_size"         { default = 6 }
-variable "app_port"         { default = 8080 }
+variable "instance_type" {
+  description = "EC2 instance size for web fleet"
+  type        = string
+  default     = "t3.medium"
+}
 
-# ─── Fetch Latest Amazon Linux 2023 AMI ──────────────────────
+variable "desired_capacity" {
+  description = "Target number of EC2 instances in the ASG"
+  type        = number
+  default     = 2
+}
+
+variable "min_size" {
+  description = "Minimum number of instances in the ASG"
+  type        = number
+  default     = 1
+}
+
+variable "max_size" {
+  description = "Maximum capacity limit for the ASG"
+  type        = number
+  default     = 6
+}
+
+variable "app_port" {
+  description = "Application listening port"
+  type        = number
+  default     = 8080
+}
+
+# Latest Amazon Linux 2023 AMI
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
@@ -28,10 +48,10 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
-# ─── Security Group — ALB ────────────────────────────────────
+# ALB Security Group
 resource "aws_security_group" "alb" {
-  name        = "${var.project_name}-alb-sg"
-  description = "Allow HTTP/HTTPS inbound to ALB"
+  name        = "${var.project_name}-alb-entry-sg"
+  description = "Inbound HTTP/HTTPS for Application Load Balancer"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -56,17 +76,20 @@ resource "aws_security_group" "alb" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  tags = { Name = "${var.project_name}-alb-sg" }
+
+  tags = {
+    Name = "${var.project_name}-alb-entry-sg"
+  }
 }
 
-# ─── Security Group — EC2 ────────────────────────────────────
+# EC2 App Security Group
 resource "aws_security_group" "ec2" {
-  name        = "${var.project_name}-ec2-sg"
-  description = "Allow traffic from ALB only"
+  name        = "${var.project_name}-ec2-fleet-sg"
+  description = "Allow inbound app traffic solely from ALB"
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description     = "App port from ALB"
+    description     = "App traffic from ALB"
     from_port       = var.app_port
     to_port         = var.app_port
     protocol        = "tcp"
@@ -79,12 +102,15 @@ resource "aws_security_group" "ec2" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  tags = { Name = "${var.project_name}-ec2-sg" }
+
+  tags = {
+    Name = "${var.project_name}-ec2-fleet-sg"
+  }
 }
 
-# ─── IAM Role for EC2 (SSM access, no SSH needed) ────────────
+# IAM Role for EC2 SSM Agent
 resource "aws_iam_role" "ec2_role" {
-  name = "${var.project_name}-ec2-role"
+  name = "${var.project_name}-ec2-instance-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -106,13 +132,15 @@ resource "aws_iam_instance_profile" "ec2" {
   role = aws_iam_role.ec2_role.name
 }
 
-# ─── Launch Template ─────────────────────────────────────────
+# Launch Template
 resource "aws_launch_template" "app" {
   name_prefix   = "${var.project_name}-lt-"
   image_id      = data.aws_ami.amazon_linux.id
   instance_type = var.instance_type
 
-  iam_instance_profile { arn = aws_iam_instance_profile.ec2.arn }
+  iam_instance_profile {
+    arn = aws_iam_instance_profile.ec2.arn
+  }
 
   network_interfaces {
     associate_public_ip_address = false
@@ -146,22 +174,19 @@ resource "aws_launch_template" "app" {
     yum install -y amazon-ssm-agent
     systemctl enable amazon-ssm-agent
     systemctl start amazon-ssm-agent
-    # Add your app startup commands here
-    echo "Server ready" > /var/www/html/health
+    echo "Server healthy" > /var/www/html/health
   EOF
   )
-
 
   tag_specifications {
     resource_type = "instance"
     tags = {
-      Name        = "${var.project_name}-web"
-      Environment = var.environment
+      Name = "${var.project_name}-web-instance"
     }
   }
 }
 
-# ─── Application Load Balancer ───────────────────────────────
+# Application Load Balancer
 resource "aws_lb" "main" {
   name               = "${var.project_name}-alb"
   internal           = false
@@ -169,8 +194,11 @@ resource "aws_lb" "main" {
   security_groups    = [aws_security_group.alb.id]
   subnets            = aws_subnet.public[*].id
 
-  enable_deletion_protection = true
-  tags = { Name = "${var.project_name}-alb" }
+  enable_deletion_protection = false
+
+  tags = {
+    Name = "${var.project_name}-alb"
+  }
 }
 
 resource "aws_lb_target_group" "app" {
@@ -198,7 +226,7 @@ resource "aws_lb_listener" "http" {
   }
 }
 
-# ─── Auto Scaling Group ──────────────────────────────────────
+# Auto Scaling Group
 resource "aws_autoscaling_group" "app" {
   name                = "${var.project_name}-asg"
   desired_capacity    = var.desired_capacity
@@ -222,12 +250,12 @@ resource "aws_autoscaling_group" "app" {
 
   tag {
     key                 = "Name"
-    value               = "${var.project_name}-asg-instance"
+    value               = "${var.project_name}-asg-fleet"
     propagate_at_launch = true
   }
 }
 
-# ─── Auto Scaling Policy (CPU-based) ─────────────────────────
+# Scaling Policies
 resource "aws_autoscaling_policy" "cpu_tracking" {
   name                   = "${var.project_name}-cpu-policy"
   autoscaling_group_name = aws_autoscaling_group.app.name
@@ -241,7 +269,6 @@ resource "aws_autoscaling_policy" "cpu_tracking" {
   }
 }
 
-# ─── Auto Scaling Policy (ALB Request Count based) ───────────
 resource "aws_autoscaling_policy" "alb_request_count" {
   name                   = "${var.project_name}-alb-request-count-policy"
   autoscaling_group_name = aws_autoscaling_group.app.name
@@ -256,8 +283,18 @@ resource "aws_autoscaling_policy" "alb_request_count" {
   }
 }
 
+# Outputs
+output "alb_dns_name" {
+  description = "Public DNS name for Application Load Balancer"
+  value       = aws_lb.main.dns_name
+}
 
-# ─── Outputs ──────────────────────────────────────────────────
-output "alb_dns_name"    { value = aws_lb.main.dns_name }
-output "asg_name"        { value = aws_autoscaling_group.app.name }
-output "launch_template" { value = aws_launch_template.app.id }
+output "asg_name" {
+  description = "Auto Scaling Group identifier"
+  value       = aws_autoscaling_group.app.name
+}
+
+output "launch_template_id" {
+  description = "EC2 Launch Template ID"
+  value       = aws_launch_template.app.id
+}
