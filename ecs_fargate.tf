@@ -1,9 +1,10 @@
-# Elastic Container Service (ECS) Configuration
-# Fargate cluster, task definitions, and services for containerized workloads
+##############################################################
+# ecs_fargate.tf — ECS Fargate Cluster, Tasks & Service
+##############################################################
 
 # ECS Cluster
 resource "aws_ecs_cluster" "main" {
-  name = "main-ecs-cluster"
+  name = "${var.project_name}-ecs-cluster"
 
   setting {
     name  = "containerInsights"
@@ -11,13 +12,10 @@ resource "aws_ecs_cluster" "main" {
   }
 
   tags = {
-    Name        = "main-ecs-cluster"
-    Environment = "production"
-    ManagedBy   = "terraform"
+    Name = "${var.project_name}-ecs-cluster"
   }
 }
 
-# ECS Cluster Capacity Providers
 resource "aws_ecs_cluster_capacity_providers" "main" {
   cluster_name = aws_ecs_cluster.main.name
 
@@ -30,19 +28,15 @@ resource "aws_ecs_cluster_capacity_providers" "main" {
   }
 }
 
-# CloudWatch Log Group for ECS
+# CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "ecs_logs" {
-  name              = "/ecs/main-app"
+  name              = "/ecs/${var.project_name}-app"
   retention_in_days = 30
-
-  tags = {
-    Name = "ecs-log-group"
-  }
 }
 
-# ECS Task Execution Role
+# Task Execution IAM Role
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "ecs-task-execution-role"
+  name = "${var.project_name}-ecs-task-exec-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -59,9 +53,9 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-# ECS Task Role (for application permissions)
+# ECS Task IAM Role
 resource "aws_iam_role" "ecs_task_role" {
-  name = "ecs-task-role"
+  name = "${var.project_name}-ecs-task-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -74,7 +68,7 @@ resource "aws_iam_role" "ecs_task_role" {
 }
 
 resource "aws_iam_role_policy" "ecs_task_policy" {
-  name = "ecs-task-policy"
+  name = "${var.project_name}-ecs-task-policy"
   role = aws_iam_role.ecs_task_role.id
 
   policy = jsonencode({
@@ -87,7 +81,7 @@ resource "aws_iam_role_policy" "ecs_task_policy" {
           "s3:PutObject",
           "s3:DeleteObject"
         ]
-        Resource = "${aws_s3_bucket.main.arn}/*"
+        Resource = "${aws_s3_bucket.assets.arn}/*"
       },
       {
         Effect = "Allow"
@@ -114,7 +108,7 @@ resource "aws_iam_role_policy" "ecs_task_policy" {
 
 # ECS Task Definition
 resource "aws_ecs_task_definition" "main_app" {
-  family                   = "main-app"
+  family                   = "${var.project_name}-app"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "512"
@@ -125,7 +119,7 @@ resource "aws_ecs_task_definition" "main_app" {
   container_definitions = jsonencode([
     {
       name      = "main-app"
-      image     = "nginx:latest" # Replace with your ECR image URI
+      image     = "nginx:latest"
       essential = true
 
       portMappings = [
@@ -137,19 +131,15 @@ resource "aws_ecs_task_definition" "main_app" {
       ]
 
       environment = [
-        { name = "APP_ENV", value = "production" },
+        { name = "APP_ENV", value = var.environment },
         { name = "PORT", value = "8080" }
-      ]
-
-      secrets = [
-        # { name = "DB_PASSWORD", valueFrom = aws_secretsmanager_secret.db_password.arn }
       ]
 
       logConfiguration = {
         logDriver = "awslogs"
         options = {
           "awslogs-group"         = aws_cloudwatch_log_group.ecs_logs.name
-          "awslogs-region"        = "us-east-1"
+          "awslogs-region"        = var.aws_region
           "awslogs-stream-prefix" = "ecs"
         }
       }
@@ -165,29 +155,27 @@ resource "aws_ecs_task_definition" "main_app" {
   ])
 
   tags = {
-    Name        = "main-app-task"
-    Environment = "production"
+    Name = "${var.project_name}-task"
   }
 }
 
 # Application Load Balancer for ECS
 resource "aws_lb" "ecs_alb" {
-  name               = "ecs-app-alb"
+  name               = "${var.project_name}-ecs-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
-  subnets            = [aws_subnet.public_subnet_1.id, aws_subnet.public_subnet_2.id]
+  subnets            = aws_subnet.public[*].id
 
   enable_deletion_protection = false
 
   tags = {
-    Name        = "ecs-alb"
-    Environment = "production"
+    Name = "${var.project_name}-ecs-alb"
   }
 }
 
 resource "aws_lb_target_group" "ecs_tg" {
-  name        = "ecs-target-group"
+  name        = "${var.project_name}-ecs-tg"
   port        = 8080
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
@@ -208,7 +196,7 @@ resource "aws_lb_target_group" "ecs_tg" {
 
 resource "aws_lb_listener" "ecs_http" {
   load_balancer_arn = aws_lb.ecs_alb.arn
-  port              = "80"
+  port              = 80
   protocol          = "HTTP"
 
   default_action {
@@ -219,7 +207,7 @@ resource "aws_lb_listener" "ecs_http" {
 
 # ECS Service
 resource "aws_ecs_service" "main_app" {
-  name            = "main-app-service"
+  name            = "${var.project_name}-service"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.main_app.arn
   desired_count   = 2
@@ -231,7 +219,7 @@ resource "aws_ecs_service" "main_app" {
   }
 
   network_configuration {
-    subnets          = [aws_subnet.private_subnet_1.id, aws_subnet.private_subnet_2.id]
+    subnets          = aws_subnet.private[*].id
     security_groups  = [aws_security_group.web_sg.id]
     assign_public_ip = false
   }
@@ -252,8 +240,7 @@ resource "aws_ecs_service" "main_app" {
   depends_on = [aws_lb_listener.ecs_http]
 
   tags = {
-    Name        = "main-app-service"
-    Environment = "production"
+    Name = "${var.project_name}-service"
   }
 }
 
@@ -267,7 +254,7 @@ resource "aws_appautoscaling_target" "ecs_target" {
 }
 
 resource "aws_appautoscaling_policy" "ecs_cpu_scaling" {
-  name               = "ecs-cpu-scaling"
+  name               = "${var.project_name}-ecs-cpu-scaling"
   policy_type        = "TargetTrackingScaling"
   resource_id        = aws_appautoscaling_target.ecs_target.resource_id
   scalable_dimension = aws_appautoscaling_target.ecs_target.scalable_dimension
@@ -284,7 +271,7 @@ resource "aws_appautoscaling_policy" "ecs_cpu_scaling" {
 }
 
 resource "aws_appautoscaling_policy" "ecs_memory_scaling" {
-  name               = "ecs-memory-scaling"
+  name               = "${var.project_name}-ecs-mem-scaling"
   policy_type        = "TargetTrackingScaling"
   resource_id        = aws_appautoscaling_target.ecs_target.resource_id
   scalable_dimension = aws_appautoscaling_target.ecs_target.scalable_dimension
@@ -300,12 +287,13 @@ resource "aws_appautoscaling_policy" "ecs_memory_scaling" {
   }
 }
 
+# Outputs
 output "ecs_cluster_name" {
-  description = "ECS cluster name"
+  description = "ECS cluster identifier"
   value       = aws_ecs_cluster.main.name
 }
 
 output "ecs_alb_dns_name" {
-  description = "ECS ALB DNS name"
+  description = "Application Load Balancer DNS name for ECS"
   value       = aws_lb.ecs_alb.dns_name
 }
