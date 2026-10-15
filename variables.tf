@@ -1,35 +1,11 @@
-variable "bucket_name" {
-  description = "The name of the S3 bucket"
+variable "aws_region" {
+  description = "Target AWS deployment region"
   type        = string
-  default     = "my-s3-bucket"
-}
-
-variable "key_pair_name" {
-  description = "The name of the key pair"
-  type        = string
-  default     = "my-key-pair"
-}
-
-variable "aws_vpc_id" {
-  description = "The ID of the VPC"
-  type        = string
-  default     = "vpc-12345678"
-}
-
-variable "aws_igw_id" {
-  description = "The ID of the Internet Gateway"
-  type        = string
-  default     = "igw-12345678"
-}
-
-variable "enable_dns_support" {
-  description = "Enable DNS support for the VPC"
-  type        = bool
-  default     = true
+  default     = "us-east-1"
 }
 
 variable "environment" {
-  description = "Deployment environment name (e.g., dev, staging, production)"
+  description = "Deployment environment name (dev, staging, production)"
   type        = string
   default     = "production"
 
@@ -40,20 +16,37 @@ variable "environment" {
 }
 
 variable "project_name" {
-  description = "Name of the project used for resource naming and tagging"
+  description = "Project name prefix used for resource naming and tagging"
   type        = string
-  default     = "my-app"
+  default     = "my-company-app"
+}
+
+variable "cost_center" {
+  description = "Cost allocation tag identifier"
+  type        = string
+  default     = "engineering"
 }
 
 variable "vpc_cidr" {
-  description = "CIDR block for the primary Virtual Private Cloud"
+  description = "CIDR block for the Virtual Private Cloud"
   type        = string
   default     = "10.0.0.0/16"
 }
 
-variable "aws_region" {
-  description = "Target AWS deployment region"
-  type        = string
-  default     = "us-east-1"
+variable "public_subnet_cidrs" {
+  description = "List of CIDR blocks for public subnets"
+  type        = list(string)
+  default     = ["10.0.1.0/24", "10.0.2.0/24"]
 }
-
+
+variable "private_subnet_cidrs" {
+  description = "List of CIDR blocks for private subnets"
+  type        = list(string)
+  default     = ["10.0.101.0/24", "10.0.102.0/24"]
+}
+
+variable "enable_dns_support" {
+  description = "Enable DNS support for the VPC"
+  type        = bool
+  default     = true
+}
