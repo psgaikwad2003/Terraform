@@ -1,21 +1,22 @@
-# CloudFront CDN Configuration
-# Distributes static and dynamic content globally with caching and HTTPS
+##############################################################
+# cloudfront_cdn.tf — Global CDN Distribution & Cache Policies
+##############################################################
 
-# Origin Access Control for S3
+# Origin Access Control for S3 Assets
 resource "aws_cloudfront_origin_access_control" "s3_oac" {
-  name                              = "s3-origin-access-control"
-  description                       = "OAC for S3 static assets"
+  name                              = "${var.project_name}-s3-oac"
+  description                       = "OAC for S3 static application assets"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
 }
 
-# Cache Policy - Optimized for static assets
+# Cache Policy for Static Assets
 resource "aws_cloudfront_cache_policy" "static_assets" {
-  name        = "static-assets-cache-policy"
+  name        = "${var.project_name}-static-assets-cache"
   comment     = "Cache policy for static assets with long TTL"
-  default_ttl = 86400    # 1 day
-  max_ttl     = 31536000 # 1 year
+  default_ttl = 86400
+  max_ttl     = 31536000
   min_ttl     = 0
 
   parameters_in_cache_key_and_forwarded_to_origin {
@@ -33,9 +34,9 @@ resource "aws_cloudfront_cache_policy" "static_assets" {
   }
 }
 
-# Security Response Headers Policy
+# Standard Security Response Headers Policy
 resource "aws_cloudfront_response_headers_policy" "security_headers" {
-  name    = "security-headers-policy"
+  name    = "${var.project_name}-security-headers"
   comment = "Enforces standard HTTP security response headers"
 
   security_headers_config {
@@ -68,20 +69,20 @@ resource "aws_cloudfront_response_headers_policy" "security_headers" {
 resource "aws_cloudfront_distribution" "main_cdn" {
   enabled             = true
   is_ipv6_enabled     = true
-  comment             = "Main CDN distribution"
+  comment             = "${var.project_name} Main CDN distribution"
   default_root_object = "index.html"
-  price_class         = "PriceClass_100" # US, Canada, Europe only
+  price_class         = "PriceClass_100"
 
-  # S3 Static Assets Origin
+  # S3 Origin
   origin {
-    domain_name              = aws_s3_bucket.main.bucket_regional_domain_name
+    domain_name              = aws_s3_bucket.assets.bucket_regional_domain_name
     origin_id                = "S3-static-assets"
     origin_access_control_id = aws_cloudfront_origin_access_control.s3_oac.id
   }
 
   # API Gateway Origin
   origin {
-    domain_name = replace(aws_api_gateway_deployment.main.invoke_url, "https://", "")
+    domain_name = replace(aws_api_gateway_stage.prod_stage.invoke_url, "https://", "")
     origin_id   = "APIGateway-backend"
     origin_path = "/prod"
 
@@ -93,7 +94,7 @@ resource "aws_cloudfront_distribution" "main_cdn" {
     }
   }
 
-  # Default cache behavior - serves from S3
+  # Default Cache Behavior - S3 Static Assets
   default_cache_behavior {
     allowed_methods            = ["GET", "HEAD", "OPTIONS"]
     cached_methods             = ["GET", "HEAD"]
@@ -104,28 +105,19 @@ resource "aws_cloudfront_distribution" "main_cdn" {
     compress                   = true
   }
 
-  # API path behavior - forwards to API Gateway
+  # Ordered Cache Behavior - API Gateway Backend
   ordered_cache_behavior {
     path_pattern               = "/api/*"
     allowed_methods            = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods             = ["GET", "HEAD"]
     target_origin_id           = "APIGateway-backend"
+    cache_policy_id            = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" # CachingDisabled
     response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers.id
     viewer_protocol_policy     = "https-only"
     compress                   = true
-
-    cache_policy_id = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" # CachingDisabled managed policy
-
-    forwarded_values {
-      query_string = true
-      headers      = ["Authorization", "Content-Type"]
-      cookies {
-        forward = "none"
-      }
-    }
   }
 
-  # Custom error responses for SPA routing
+  # SPA Custom Error Responses
   custom_error_response {
     error_code            = 403
     response_code         = 200
@@ -148,23 +140,14 @@ resource "aws_cloudfront_distribution" "main_cdn" {
 
   viewer_certificate {
     cloudfront_default_certificate = true
-    # Uncomment below when using a custom domain with ACM certificate:
-    # acm_certificate_arn      = aws_acm_certificate.main.arn
-    # ssl_support_method       = "sni-only"
-    # minimum_protocol_version = "TLSv1.2_2021"
   }
 
-  # WAF Web ACL association (optional)
-  # web_acl_id = aws_wafv2_web_acl.main.arn
-
   tags = {
-    Name        = "main-cdn"
-    Environment = "production"
-    ManagedBy   = "terraform"
+    Name = "${var.project_name}-cdn"
   }
 }
 
-# Output the CloudFront domain
+# Outputs
 output "cloudfront_domain_name" {
   description = "CloudFront distribution domain name"
   value       = aws_cloudfront_distribution.main_cdn.domain_name
