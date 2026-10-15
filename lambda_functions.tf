@@ -1,45 +1,39 @@
-# ─────────────────────────────────────────────
-#  AWS Lambda Functions
-# ─────────────────────────────────────────────
+##############################################################
+# lambda_functions.tf — Serverless Lambda Handlers & Roles
+##############################################################
 
-# IAM Role for Lambda execution
+# Execution Role for Lambda
 resource "aws_iam_role" "lambda_exec_role" {
-  name = "lambda-exec-role"
+  name = "${var.project_name}-lambda-exec-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
-      }
-    ]
+    Statement = [{
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "lambda.amazonaws.com" }
+    }]
   })
 
   tags = {
-    Name        = "lambda-exec-role"
-    Environment = "production"
+    Name = "${var.project_name}-lambda-exec-role"
   }
 }
 
-# Attach basic Lambda execution policy
+# Attach Managed Policies
 resource "aws_iam_role_policy_attachment" "lambda_basic_exec" {
   role       = aws_iam_role.lambda_exec_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-# Attach AWS X-Ray daemon write policy for tracing
 resource "aws_iam_role_policy_attachment" "lambda_xray" {
   role       = aws_iam_role.lambda_exec_role.name
   policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
 }
 
-# Attach DynamoDB access policy for Lambda
+# DynamoDB Access Policy for Lambda Functions
 resource "aws_iam_role_policy" "lambda_dynamodb_policy" {
-  name = "lambda-dynamodb-access"
+  name = "${var.project_name}-lambda-dynamodb-policy"
   role = aws_iam_role.lambda_exec_role.id
 
   policy = jsonencode({
@@ -55,32 +49,28 @@ resource "aws_iam_role_policy" "lambda_dynamodb_policy" {
           "dynamodb:Scan",
           "dynamodb:Query"
         ]
-        Resource = "*"
+        Resource = aws_dynamodb_table.items_table.arn
       }
     ]
   })
 }
 
-# ─────────────────────────────────────────────
-#  Lambda: GET Items Function
-# ─────────────────────────────────────────────
+# 1. GET Items Function
 resource "aws_lambda_function" "get_items" {
-  function_name = "get-items-function"
-  role          = aws_iam_role.lambda_exec_role.arn
-  handler       = "index.handler"
-  runtime       = "nodejs20.x"
-  architectures = ["arm64"]
-  timeout       = 30
-  memory_size   = 256
-
-
-  filename         = "get_items.zip"
-  source_code_hash = filebase64sha256("get_items.zip")
+  function_name    = "${var.project_name}-get-items"
+  role             = aws_iam_role.lambda_exec_role.arn
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  architectures    = ["arm64"]
+  timeout          = 30
+  memory_size      = 256
+  filename         = "${path.module}/lambda_payload.zip"
+  source_code_hash = filebase64sha256("${path.module}/lambda_payload.zip")
 
   environment {
     variables = {
       TABLE_NAME  = aws_dynamodb_table.items_table.name
-      ENVIRONMENT = "production"
+      ENVIRONMENT = var.environment
     }
   }
 
@@ -89,29 +79,25 @@ resource "aws_lambda_function" "get_items" {
   }
 
   tags = {
-    Name        = "get-items-function"
-    Environment = "production"
+    Name = "${var.project_name}-get-items"
   }
 }
 
-# ─────────────────────────────────────────────
-#  Lambda: POST (Create) Item Function
-# ─────────────────────────────────────────────
+# 2. POST (Create) Item Function
 resource "aws_lambda_function" "create_item" {
-  function_name = "create-item-function"
-  role          = aws_iam_role.lambda_exec_role.arn
-  handler       = "index.handler"
-  runtime       = "nodejs20.x"
-  timeout       = 30
-  memory_size   = 256
-
-  filename         = "create_item.zip"
-  source_code_hash = filebase64sha256("create_item.zip")
+  function_name    = "${var.project_name}-create-item"
+  role             = aws_iam_role.lambda_exec_role.arn
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  timeout          = 30
+  memory_size      = 256
+  filename         = "${path.module}/lambda_payload.zip"
+  source_code_hash = filebase64sha256("${path.module}/lambda_payload.zip")
 
   environment {
     variables = {
       TABLE_NAME  = aws_dynamodb_table.items_table.name
-      ENVIRONMENT = "production"
+      ENVIRONMENT = var.environment
     }
   }
 
@@ -120,29 +106,25 @@ resource "aws_lambda_function" "create_item" {
   }
 
   tags = {
-    Name        = "create-item-function"
-    Environment = "production"
+    Name = "${var.project_name}-create-item"
   }
 }
 
-# ─────────────────────────────────────────────
-#  Lambda: DELETE Item Function
-# ─────────────────────────────────────────────
+# 3. DELETE Item Function
 resource "aws_lambda_function" "delete_item" {
-  function_name = "delete-item-function"
-  role          = aws_iam_role.lambda_exec_role.arn
-  handler       = "index.handler"
-  runtime       = "nodejs20.x"
-  timeout       = 30
-  memory_size   = 128
-
-  filename         = "delete_item.zip"
-  source_code_hash = filebase64sha256("delete_item.zip")
+  function_name    = "${var.project_name}-delete-item"
+  role             = aws_iam_role.lambda_exec_role.arn
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  timeout          = 30
+  memory_size      = 128
+  filename         = "${path.module}/lambda_payload.zip"
+  source_code_hash = filebase64sha256("${path.module}/lambda_payload.zip")
 
   environment {
     variables = {
       TABLE_NAME  = aws_dynamodb_table.items_table.name
-      ENVIRONMENT = "production"
+      ENVIRONMENT = var.environment
     }
   }
 
@@ -151,12 +133,11 @@ resource "aws_lambda_function" "delete_item" {
   }
 
   tags = {
-    Name        = "delete-item-function"
-    Environment = "production"
+    Name = "${var.project_name}-delete-item"
   }
 }
 
-# CloudWatch Log Groups for Lambda functions
+# CloudWatch Log Groups
 resource "aws_cloudwatch_log_group" "get_items_logs" {
   name              = "/aws/lambda/${aws_lambda_function.get_items.function_name}"
   retention_in_days = 14
@@ -170,4 +151,20 @@ resource "aws_cloudwatch_log_group" "create_item_logs" {
 resource "aws_cloudwatch_log_group" "delete_item_logs" {
   name              = "/aws/lambda/${aws_lambda_function.delete_item.function_name}"
   retention_in_days = 14
+}
+
+# Outputs
+output "lambda_get_items_arn" {
+  description = "ARN of the GET items Lambda function"
+  value       = aws_lambda_function.get_items.arn
+}
+
+output "lambda_create_item_arn" {
+  description = "ARN of the POST create item Lambda function"
+  value       = aws_lambda_function.create_item.arn
+}
+
+output "lambda_delete_item_arn" {
+  description = "ARN of the DELETE item Lambda function"
+  value       = aws_lambda_function.delete_item.arn
 }
