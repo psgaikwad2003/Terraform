@@ -1,33 +1,61 @@
 ##############################################################
-# FILE 5: rds_database.tf — RDS PostgreSQL with Read Replica
-# Use-case: Provision a managed database cluster with Multi-AZ
-#            for high availability, automated backups, read
-#            replica for reporting, and Secrets Manager rotation.
+# rds_database.tf — RDS PostgreSQL with Read Replica & Secrets
 ##############################################################
 
-# ─── Variables ───────────────────────────────────────────────
-variable "db_name"             { default = "appdb" }
-variable "db_username"         { default = "dbadmin" }
-variable "db_instance_class"   { default = "db.t3.medium" }
-variable "db_allocated_storage" { default = 100 }
-variable "db_engine_version"   { default = "15.4" }
-variable "db_backup_retention" { default = 7 }
+variable "db_name" {
+  description = "Name of the default database to create"
+  type        = string
+  default     = "appdb"
+}
 
-# ─── DB Subnet Group ─────────────────────────────────────────
+variable "db_username" {
+  description = "Master username for database administration"
+  type        = string
+  default     = "dbadmin"
+}
+
+variable "db_instance_class" {
+  description = "Compute and memory capacity instance class"
+  type        = string
+  default     = "db.t3.medium"
+}
+
+variable "db_allocated_storage" {
+  description = "Allocated storage in gigabytes"
+  type        = number
+  default     = 100
+}
+
+variable "db_engine_version" {
+  description = "PostgreSQL engine version"
+  type        = string
+  default     = "15.4"
+}
+
+variable "db_backup_retention" {
+  description = "Days of automated backup retention"
+  type        = number
+  default     = 7
+}
+
+# DB Subnet Group across private subnets
 resource "aws_db_subnet_group" "main" {
   name       = "${var.project_name}-db-subnet-group"
   subnet_ids = aws_subnet.private[*].id
-  tags       = { Name = "${var.project_name}-db-subnet-group" }
+
+  tags = {
+    Name = "${var.project_name}-db-subnet-group"
+  }
 }
 
-# ─── Security Group — RDS ────────────────────────────────────
+# RDS Security Group
 resource "aws_security_group" "rds" {
   name        = "${var.project_name}-rds-sg"
-  description = "RDS: allow access only from EC2 app servers"
+  description = "Allow PostgreSQL access from EC2 application servers"
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description     = "PostgreSQL from app"
+    description     = "PostgreSQL from app servers"
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
@@ -35,20 +63,27 @@ resource "aws_security_group" "rds" {
   }
 
   egress {
+    description = "Allow all outbound"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  tags = { Name = "${var.project_name}-rds-sg" }
+
+  tags = {
+    Name = "${var.project_name}-rds-sg"
+  }
 }
 
-# ─── KMS Key for RDS encryption ──────────────────────────────
+# KMS Key for Database Storage Encryption
 resource "aws_kms_key" "rds" {
-  description             = "KMS key for RDS encryption"
+  description             = "KMS key for RDS storage encryption"
   deletion_window_in_days = 10
   enable_key_rotation     = true
-  tags                    = { Name = "${var.project_name}-rds-kms" }
+
+  tags = {
+    Name = "${var.project_name}-rds-kms"
+  }
 }
 
 resource "aws_kms_alias" "rds" {
@@ -56,7 +91,7 @@ resource "aws_kms_alias" "rds" {
   target_key_id = aws_kms_key.rds.key_id
 }
 
-# ─── DB Password in Secrets Manager ─────────────────────────
+# Database Master Password & Secret
 resource "random_password" "db_password" {
   length           = 24
   special          = true
@@ -67,7 +102,10 @@ resource "aws_secretsmanager_secret" "db_password" {
   name                    = "${var.project_name}/rds/db-password"
   kms_key_id              = aws_kms_key.rds.arn
   recovery_window_in_days = 7
-  tags                    = { Name = "${var.project_name}-db-secret" }
+
+  tags = {
+    Name = "${var.project_name}-db-secret"
+  }
 }
 
 resource "aws_secretsmanager_secret_version" "db_password" {
@@ -81,7 +119,7 @@ resource "aws_secretsmanager_secret_version" "db_password" {
   })
 }
 
-# ─── DB Parameter Group (tuned for web apps) ─────────────────
+# Parameter Group
 resource "aws_db_parameter_group" "postgres" {
   name   = "${var.project_name}-pg-params"
   family = "postgres15"
@@ -98,7 +136,7 @@ resource "aws_db_parameter_group" "postgres" {
 
   parameter {
     name  = "log_min_duration_statement"
-    value = "1000"  # Log queries slower than 1 second
+    value = "1000"
   }
 
   parameter {
@@ -107,7 +145,7 @@ resource "aws_db_parameter_group" "postgres" {
   }
 }
 
-# ─── Primary RDS Instance (Multi-AZ) ─────────────────────────
+# Primary Multi-AZ RDS Instance
 resource "aws_db_instance" "primary" {
   identifier             = "${var.project_name}-primary"
   engine                 = "postgres"
@@ -127,34 +165,32 @@ resource "aws_db_instance" "primary" {
   vpc_security_group_ids = [aws_security_group.rds.id]
   parameter_group_name   = aws_db_parameter_group.postgres.name
 
-  multi_az               = true
-  publicly_accessible    = false
-  deletion_protection    = true
-  skip_final_snapshot    = false
+  multi_az                  = true
+  publicly_accessible       = false
+  deletion_protection       = true
+  skip_final_snapshot       = false
   final_snapshot_identifier = "${var.project_name}-final-snapshot"
 
-  backup_retention_period   = var.db_backup_retention
-  backup_window             = "03:00-04:00"
-  maintenance_window        = "mon:04:00-mon:05:00"
+  backup_retention_period = var.db_backup_retention
+  backup_window           = "03:00-04:00"
+  maintenance_window      = "mon:04:00-mon:05:00"
 
-  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
-  performance_insights_enabled    = true
+  enabled_cloudwatch_logs_exports       = ["postgresql", "upgrade"]
+  performance_insights_enabled          = true
   performance_insights_retention_period = 7
-  monitoring_interval = 60
-  monitoring_role_arn = aws_iam_role.rds_monitoring.arn
+  monitoring_interval                   = 60
+  monitoring_role_arn                   = aws_iam_role.rds_monitoring.arn
 
   auto_minor_version_upgrade          = true
   copy_tags_to_snapshot               = true
   iam_database_authentication_enabled = true
 
   tags = {
-    Name        = "${var.project_name}-rds-primary"
-    Environment = "production"
-    ManagedBy   = "terraform"
+    Name = "${var.project_name}-rds-primary"
   }
 }
 
-# ─── Read Replica (for reporting/analytics queries) ───────────
+# Read Replica RDS Instance
 resource "aws_db_instance" "replica" {
   identifier          = "${var.project_name}-replica"
   instance_class      = var.db_instance_class
@@ -175,14 +211,11 @@ resource "aws_db_instance" "replica" {
   monitoring_role_arn          = aws_iam_role.rds_monitoring.arn
 
   tags = {
-    Name        = "${var.project_name}-rds-replica"
-    Environment = "production"
-    ManagedBy   = "terraform"
+    Name = "${var.project_name}-rds-replica"
   }
 }
 
-
-# ─── Enhanced Monitoring Role ─────────────────────────────────
+# Enhanced Monitoring IAM Role
 resource "aws_iam_role" "rds_monitoring" {
   name = "${var.project_name}-rds-monitoring-role"
 
@@ -201,8 +234,23 @@ resource "aws_iam_role_policy_attachment" "rds_monitoring" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
 }
 
-# ─── Outputs ──────────────────────────────────────────────────
-output "rds_primary_endpoint" { value = aws_db_instance.primary.endpoint }
-output "rds_replica_endpoint" { value = aws_db_instance.replica.endpoint }
-output "db_secret_arn"        { value = aws_secretsmanager_secret.db_password.arn }
-output "db_name"              { value = aws_db_instance.primary.db_name }
+# Outputs
+output "rds_primary_endpoint" {
+  description = "Connection endpoint for the primary database"
+  value       = aws_db_instance.primary.endpoint
+}
+
+output "rds_replica_endpoint" {
+  description = "Connection endpoint for the read replica"
+  value       = aws_db_instance.replica.endpoint
+}
+
+output "rds_db_secret_arn" {
+  description = "ARN of the Secrets Manager secret for RDS master credentials"
+  value       = aws_secretsmanager_secret.db_password.arn
+}
+
+output "rds_database_name" {
+  description = "Database name"
+  value       = aws_db_instance.primary.db_name
+}
