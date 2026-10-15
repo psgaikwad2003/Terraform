@@ -1,63 +1,15 @@
-# VPC Networking Configuration
-# Defines the core network infrastructure: VPC, subnets, route tables, and gateways
+##############################################################
+# vpc_networking.tf — Core Network Infrastructure
+##############################################################
 
+# Primary VPC
 resource "aws_vpc" "main" {
-  cidr_block           = "10.0.0.0/16"
+  cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
   enable_dns_support   = var.enable_dns_support
 
   tags = {
-    Name        = "main-vpc"
-    Environment = "production"
-    ManagedBy   = "terraform"
-  }
-}
-
-# Public Subnets
-resource "aws_subnet" "public_subnet_1" {
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.1.0/24"
-  availability_zone       = "us-east-1a"
-  map_public_ip_on_launch = true
-
-  tags = {
-    Name = "public-subnet-1"
-    Type = "public"
-  }
-}
-
-resource "aws_subnet" "public_subnet_2" {
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.2.0/24"
-  availability_zone       = "us-east-1b"
-  map_public_ip_on_launch = true
-
-  tags = {
-    Name = "public-subnet-2"
-    Type = "public"
-  }
-}
-
-# Private Subnets
-resource "aws_subnet" "private_subnet_1" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.3.0/24"
-  availability_zone = "us-east-1a"
-
-  tags = {
-    Name = "private-subnet-1"
-    Type = "private"
-  }
-}
-
-resource "aws_subnet" "private_subnet_2" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.4.0/24"
-  availability_zone = "us-east-1b"
-
-  tags = {
-    Name = "private-subnet-2"
-    Type = "private"
+    Name = "${var.project_name}-vpc"
   }
 }
 
@@ -66,7 +18,34 @@ resource "aws_internet_gateway" "main_igw" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-    Name = "main-internet-gateway"
+    Name = "${var.project_name}-igw"
+  }
+}
+
+# Public Subnets
+resource "aws_subnet" "public" {
+  count                   = length(var.public_subnet_cidrs)
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.public_subnet_cidrs[count.index]
+  availability_zone       = data.aws_availability_zones.available.names[count.index]
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "${var.project_name}-public-${count.index + 1}"
+    Tier = "public"
+  }
+}
+
+# Private Subnets
+resource "aws_subnet" "private" {
+  count             = length(var.private_subnet_cidrs)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.private_subnet_cidrs[count.index]
+  availability_zone = data.aws_availability_zones.available.names[count.index]
+
+  tags = {
+    Name = "${var.project_name}-private-${count.index + 1}"
+    Tier = "private"
   }
 }
 
@@ -76,23 +55,22 @@ resource "aws_eip" "nat_eip" {
   depends_on = [aws_internet_gateway.main_igw]
 
   tags = {
-    Name = "nat-gateway-eip"
+    Name = "${var.project_name}-nat-eip"
   }
 }
 
-# NAT Gateway (for private subnet internet access)
+# NAT Gateway for private subnet outbound access
 resource "aws_nat_gateway" "main_nat" {
   allocation_id = aws_eip.nat_eip.id
-  subnet_id     = aws_subnet.public_subnet_1.id
+  subnet_id     = aws_subnet.public[0].id
+  depends_on    = [aws_internet_gateway.main_igw]
 
   tags = {
-    Name = "main-nat-gateway"
+    Name = "${var.project_name}-nat-gateway"
   }
-
-  depends_on = [aws_internet_gateway.main_igw]
 }
 
-# Public Route Table
+# Route Tables
 resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.main.id
 
@@ -102,11 +80,10 @@ resource "aws_route_table" "public_rt" {
   }
 
   tags = {
-    Name = "public-route-table"
+    Name = "${var.project_name}-public-rt"
   }
 }
 
-# Private Route Table
 resource "aws_route_table" "private_rt" {
   vpc_id = aws_vpc.main.id
 
@@ -116,51 +93,31 @@ resource "aws_route_table" "private_rt" {
   }
 
   tags = {
-    Name = "private-route-table"
+    Name = "${var.project_name}-private-rt"
   }
 }
 
-# Route Table Associations - Public
-resource "aws_route_table_association" "public_1" {
-  subnet_id      = aws_subnet.public_subnet_1.id
+# Route Table Associations
+resource "aws_route_table_association" "public" {
+  count          = length(aws_subnet.public)
+  subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public_rt.id
 }
 
-resource "aws_route_table_association" "public_2" {
-  subnet_id      = aws_subnet.public_subnet_2.id
-  route_table_id = aws_route_table.public_rt.id
-}
-
-# Route Table Associations - Private
-resource "aws_route_table_association" "private_1" {
-  subnet_id      = aws_subnet.private_subnet_1.id
-  route_table_id = aws_route_table.private_rt.id
-}
-
-resource "aws_route_table_association" "private_2" {
-  subnet_id      = aws_subnet.private_subnet_2.id
+resource "aws_route_table_association" "private" {
+  count          = length(aws_subnet.private)
+  subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private_rt.id
 }
 
 # VPC Flow Logs
-resource "aws_flow_log" "vpc_flow_log" {
-  iam_role_arn    = aws_iam_role.flow_log_role.arn
-  log_destination = aws_cloudwatch_log_group.vpc_flow_logs.arn
-  traffic_type    = "ALL"
-  vpc_id          = aws_vpc.main.id
-
-  tags = {
-    Name = "vpc-flow-logs"
-  }
-}
-
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
-  name              = "/aws/vpc/flowlogs"
+  name              = "/aws/vpc/${var.project_name}-flowlogs"
   retention_in_days = 30
 }
 
 resource "aws_iam_role" "flow_log_role" {
-  name = "vpc-flow-log-role"
+  name = "${var.project_name}-vpc-flow-log-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -173,7 +130,7 @@ resource "aws_iam_role" "flow_log_role" {
 }
 
 resource "aws_iam_role_policy" "flow_log_policy" {
-  name = "vpc-flow-log-policy"
+  name = "${var.project_name}-vpc-flow-log-policy"
   role = aws_iam_role.flow_log_role.id
 
   policy = jsonencode({
@@ -192,10 +149,21 @@ resource "aws_iam_role_policy" "flow_log_policy" {
   })
 }
 
+resource "aws_flow_log" "vpc_flow_log" {
+  iam_role_arn    = aws_iam_role.flow_log_role.arn
+  log_destination = aws_cloudwatch_log_group.vpc_flow_logs.arn
+  traffic_type    = "ALL"
+  vpc_id          = aws_vpc.main.id
+
+  tags = {
+    Name = "${var.project_name}-flow-logs"
+  }
+}
+
 # S3 VPC Gateway Endpoint
 resource "aws_vpc_endpoint" "s3_endpoint" {
   vpc_id            = aws_vpc.main.id
-  service_name      = "com.amazonaws.us-east-1.s3"
+  service_name      = "com.amazonaws.${var.aws_region}.s3"
   vpc_endpoint_type = "Gateway"
 
   route_table_ids = [
@@ -204,8 +172,6 @@ resource "aws_vpc_endpoint" "s3_endpoint" {
   ]
 
   tags = {
-    Name        = "main-s3-gateway-endpoint"
-    Environment = "production"
+    Name = "${var.project_name}-s3-endpoint"
   }
 }
-
