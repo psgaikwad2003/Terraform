@@ -1,14 +1,15 @@
-# Security Groups Configuration
-# Defines security groups for all application tiers
+##############################################################
+# security_groups.tf — Tiered Security Group Definitions
+##############################################################
 
-# ALB Security Group - allows public HTTP/HTTPS traffic
+# Public Application Load Balancer Security Group
 resource "aws_security_group" "alb_sg" {
-  name        = "alb-security-group"
-  description = "Security group for Application Load Balancer"
+  name        = "${var.project_name}-alb-sg"
+  description = "Security group for public Application Load Balancer"
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description = "Allow HTTP"
+    description = "Allow inbound HTTP"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -16,7 +17,7 @@ resource "aws_security_group" "alb_sg" {
   }
 
   ingress {
-    description = "Allow HTTPS"
+    description = "Allow inbound HTTPS"
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
@@ -24,7 +25,7 @@ resource "aws_security_group" "alb_sg" {
   }
 
   egress {
-    description = "Allow all outbound"
+    description = "Allow all outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -32,29 +33,20 @@ resource "aws_security_group" "alb_sg" {
   }
 
   tags = {
-    Name        = "alb-sg"
-    Environment = "production"
+    Name = "${var.project_name}-alb-sg"
   }
 }
 
-# Web Tier Security Group - allows traffic from ALB only
+# Web Tier Security Group
 resource "aws_security_group" "web_sg" {
-  name        = "web-security-group"
-  description = "Security group for web/app servers"
+  name        = "${var.project_name}-web-sg"
+  description = "Security group for application web servers"
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description     = "HTTP from ALB"
+    description     = "HTTP traffic from ALB"
     from_port       = 80
     to_port         = 80
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb_sg.id]
-  }
-
-  ingress {
-    description     = "HTTPS from ALB"
-    from_port       = 443
-    to_port         = 443
     protocol        = "tcp"
     security_groups = [aws_security_group.alb_sg.id]
   }
@@ -68,6 +60,7 @@ resource "aws_security_group" "web_sg" {
   }
 
   egress {
+    description = "Allow all outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -75,27 +68,18 @@ resource "aws_security_group" "web_sg" {
   }
 
   tags = {
-    Name        = "web-sg"
-    Environment = "production"
+    Name = "${var.project_name}-web-sg"
   }
 }
 
-# Database Security Group - allows traffic from web tier only
+# Database Security Group
 resource "aws_security_group" "db_sg" {
-  name        = "db-security-group"
-  description = "Security group for RDS database"
+  name        = "${var.project_name}-db-sg"
+  description = "Security group for database instances"
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description     = "MySQL from web tier"
-    from_port       = 3306
-    to_port         = 3306
-    protocol        = "tcp"
-    security_groups = [aws_security_group.web_sg.id]
-  }
-
-  ingress {
-    description     = "PostgreSQL from web tier"
+    description     = "PostgreSQL traffic from web tier"
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
@@ -103,6 +87,7 @@ resource "aws_security_group" "db_sg" {
   }
 
   egress {
+    description = "Allow all outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -110,18 +95,18 @@ resource "aws_security_group" "db_sg" {
   }
 
   tags = {
-    Name        = "db-sg"
-    Environment = "production"
+    Name = "${var.project_name}-db-sg"
   }
 }
 
-# Lambda Security Group - for VPC-attached Lambda functions
+# Lambda Function Security Group
 resource "aws_security_group" "lambda_sg" {
-  name        = "lambda-security-group"
-  description = "Security group for Lambda functions inside VPC"
+  name        = "${var.project_name}-lambda-sg"
+  description = "Security group for Lambda functions"
   vpc_id      = aws_vpc.main.id
 
   egress {
+    description = "Allow all outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -129,26 +114,26 @@ resource "aws_security_group" "lambda_sg" {
   }
 
   tags = {
-    Name        = "lambda-sg"
-    Environment = "production"
+    Name = "${var.project_name}-lambda-sg"
   }
 }
 
-# Bastion Host Security Group - restricted SSH access
+# Bastion Host Security Group
 resource "aws_security_group" "bastion_sg" {
-  name        = "bastion-security-group"
-  description = "Security group for Bastion/Jump host"
+  name        = "${var.project_name}-bastion-sg"
+  description = "Security group for Bastion jump host"
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description = "SSH from admin IP range (update with your IP)"
+    description = "SSH from administrative network"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # TODO: Restrict to your admin CIDR
+    cidr_blocks = ["10.0.0.0/16"]
   }
 
   egress {
+    description = "Allow all outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -156,14 +141,13 @@ resource "aws_security_group" "bastion_sg" {
   }
 
   tags = {
-    Name        = "bastion-sg"
-    Environment = "production"
+    Name = "${var.project_name}-bastion-sg"
   }
 }
 
-# EFS Security Group - Elastic File System
+# EFS Mount Target Security Group
 resource "aws_security_group" "efs_sg" {
-  name        = "efs-security-group"
+  name        = "${var.project_name}-efs-sg"
   description = "Security group for EFS mount targets"
   vpc_id      = aws_vpc.main.id
 
@@ -176,6 +160,7 @@ resource "aws_security_group" "efs_sg" {
   }
 
   egress {
+    description = "Allow all outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -183,14 +168,13 @@ resource "aws_security_group" "efs_sg" {
   }
 
   tags = {
-    Name        = "efs-sg"
-    Environment = "production"
+    Name = "${var.project_name}-efs-sg"
   }
 }
 
-# ElastiCache Redis Security Group - In-memory caching tier
+# ElastiCache Redis Security Group
 resource "aws_security_group" "redis_sg" {
-  name        = "redis-security-group"
+  name        = "${var.project_name}-redis-sg"
   description = "Security group for ElastiCache Redis cluster"
   vpc_id      = aws_vpc.main.id
 
@@ -203,7 +187,7 @@ resource "aws_security_group" "redis_sg" {
   }
 
   egress {
-    description = "Allow outbound traffic"
+    description = "Allow all outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -211,8 +195,6 @@ resource "aws_security_group" "redis_sg" {
   }
 
   tags = {
-    Name        = "redis-sg"
-    Environment = "production"
+    Name = "${var.project_name}-redis-sg"
   }
 }
-
