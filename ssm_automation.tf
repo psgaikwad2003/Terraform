@@ -3,11 +3,11 @@
 ##############################################################
 
 # Application configuration stored in Parameter Store
-resource "aws_ssm_parameter" "app_env" {
-  name        = "/${var.project_name}/${var.environment}/app_env"
-  description = "Runtime environment name"
+resource "aws_ssm_parameter" "app_tier_config" {
+  name        = "/${var.project_name}/${var.environment}/tier"
+  description = "Runtime application tier identifier"
   type        = "String"
-  value       = var.environment
+  value       = "web-api"
 
   tags = local.common_tags
 }

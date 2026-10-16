@@ -57,12 +57,6 @@ variable "redis_node_type" {
   default     = "cache.t4g.small"
 }
 
-variable "backup_retention_days" {
-  description = "Number of days to retain automated daily backups"
-  type        = number
-  default     = 30
-}
-
 variable "waf_rate_limit" {
   description = "Maximum number of requests permitted per 5-minute evaluation period per IP"
   type        = number
