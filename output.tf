@@ -70,3 +70,73 @@ output "rds_endpoint" {
   description = "Endpoint of the primary RDS PostgreSQL database"
   value       = aws_db_instance.primary.endpoint
 }
+
+# KMS Encryption
+output "kms_storage_key_arn" {
+  description = "ARN of the customer managed key for storage encryption"
+  value       = aws_kms_key.storage_key.arn
+}
+
+output "kms_database_key_arn" {
+  description = "ARN of the customer managed key for database encryption"
+  value       = aws_kms_key.database_key.arn
+}
+
+# Caching & Persistent Storage
+output "elasticache_redis_endpoint" {
+  description = "Primary endpoint address for the ElastiCache Redis cluster"
+  value       = aws_elasticache_replication_group.redis_cluster.primary_endpoint_address
+}
+
+output "efs_file_system_id" {
+  description = "ID of the shared multi-AZ Elastic File System"
+  value       = aws_efs_file_system.main.id
+}
+
+# Messaging & Event-Driven Architecture
+output "sqs_tasks_queue_url" {
+  description = "URL of the primary SQS asynchronous tasks queue"
+  value       = aws_sqs_queue.app_queue.id
+}
+
+output "sqs_orders_fifo_queue_url" {
+  description = "URL of the transactional FIFO orders queue"
+  value       = aws_sqs_queue.orders_fifo_queue.id
+}
+
+output "sns_notifications_topic_arn" {
+  description = "ARN of the SNS event notification topic"
+  value       = aws_sns_topic.notifications.arn
+}
+
+output "eventbridge_bus_arn" {
+  description = "ARN of the custom application EventBridge bus"
+  value       = aws_cloudwatch_event_bus.app_bus.arn
+}
+
+# Security, WAF & Governance
+output "waf_web_acl_arn" {
+  description = "ARN of the AWS WAFv2 regional Web ACL"
+  value       = aws_wafv2_web_acl.regional_acl.arn
+}
+
+output "backup_vault_arn" {
+  description = "ARN of the central AWS Backup vault"
+  value       = aws_backup_vault.main.arn
+}
+
+output "cloudtrail_arn" {
+  description = "ARN of the multi-region CloudTrail audit trail"
+  value       = aws_cloudtrail.main.arn
+}
+
+# Workflow Orchestration & Analytics
+output "step_functions_state_machine_arn" {
+  description = "ARN of the order processing Step Functions state machine"
+  value       = aws_sfn_state_machine.order_workflow.arn
+}
+
+output "athena_workgroup_name" {
+  description = "Name of the Athena interactive query workgroup"
+  value       = aws_athena_workgroup.analytics_workgroup.name
+}
