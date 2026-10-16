@@ -50,3 +50,27 @@ variable "enable_dns_support" {
   type        = bool
   default     = true
 }
+
+variable "redis_node_type" {
+  description = "Compute and memory capacity node type for ElastiCache Redis cluster"
+  type        = string
+  default     = "cache.t4g.small"
+}
+
+variable "backup_retention_days" {
+  description = "Number of days to retain automated daily backups"
+  type        = number
+  default     = 30
+}
+
+variable "waf_rate_limit" {
+  description = "Maximum number of requests permitted per 5-minute evaluation period per IP"
+  type        = number
+  default     = 2000
+}
+
+variable "custom_domain_name" {
+  description = "Custom root domain name for API endpoints and Route 53 zones"
+  type        = string
+  default     = "example.com"
+}

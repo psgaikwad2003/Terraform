@@ -58,7 +58,7 @@ resource "aws_wafv2_web_acl" "regional_acl" {
 
     statement {
       rate_based_statement {
-        limit              = 2000
+        limit              = var.waf_rate_limit
         aggregate_key_type = "IP"
       }
     }

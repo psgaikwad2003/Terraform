@@ -37,7 +37,7 @@ resource "aws_elasticache_parameter_group" "redis_params" {
 resource "aws_elasticache_replication_group" "redis_cluster" {
   replication_group_id = "${var.project_name}-redis"
   description          = "Redis replication group for session cache and query caching"
-  node_type            = "cache.t4g.small"
+  node_type            = var.redis_node_type
   num_cache_clusters   = 2
   port                 = 6379
 
