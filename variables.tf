@@ -80,3 +80,9 @@ variable "athena_query_cutoff_gb" {
   type        = number
   default     = 10
 }
+
+variable "enable_flow_logs" {
+  description = "Flag to enable VPC flow logs for network traffic auditing"
+  type        = bool
+  default     = true
+}
