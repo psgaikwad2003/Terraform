@@ -77,21 +77,33 @@ resource "aws_secretsmanager_secret_version" "jwt_secret" {
 
 # 4. SSM Parameter Store Configurations
 resource "aws_ssm_parameter" "app_env" {
-  name  = "/${var.project_name}/app/environment"
-  type  = "String"
-  value = var.environment
+  name        = "/${var.project_name}/app/environment"
+  description = "Application deployment environment name"
+  type        = "String"
+  tier        = "Standard"
+  value       = var.environment
+
+  tags = local.common_tags
 }
 
 resource "aws_ssm_parameter" "app_log_level" {
-  name  = "/${var.project_name}/app/log-level"
-  type  = "String"
-  value = "INFO"
+  name        = "/${var.project_name}/app/log-level"
+  description = "Application logging verbosity level"
+  type        = "String"
+  tier        = "Standard"
+  value       = "INFO"
+
+  tags = local.common_tags
 }
 
 resource "aws_ssm_parameter" "app_region" {
-  name  = "/${var.project_name}/app/region"
-  type  = "String"
-  value = var.aws_region
+  name        = "/${var.project_name}/app/region"
+  description = "Application AWS deployment region"
+  type        = "String"
+  tier        = "Standard"
+  value       = var.aws_region
+
+  tags = local.common_tags
 }
 
 resource "aws_ssm_parameter" "feature_dark_mode" {
