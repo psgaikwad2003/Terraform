@@ -140,3 +140,13 @@ output "athena_workgroup_name" {
   description = "Name of the Athena interactive query workgroup"
   value       = aws_athena_workgroup.analytics_workgroup.name
 }
+
+output "athena_workgroup_arn" {
+  description = "ARN of the Athena interactive query workgroup"
+  value       = aws_athena_workgroup.analytics_workgroup.arn
+}
+
+output "glue_catalog_database_name" {
+  description = "Name of the central Glue Data Catalog database"
+  value       = aws_glue_catalog_database.analytics_db.name
+}
