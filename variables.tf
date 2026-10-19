@@ -68,3 +68,15 @@ variable "custom_domain_name" {
   type        = string
   default     = "example.com"
 }
+
+variable "datalake_glacier_transition_days" {
+  description = "Days before transitioning raw data lake objects to Glacier storage"
+  type        = number
+  default     = 90
+}
+
+variable "athena_query_cutoff_gb" {
+  description = "Safeguard cutoff limit in gigabytes for Athena query data scanned"
+  type        = number
+  default     = 10
+}
