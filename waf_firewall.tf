@@ -116,6 +116,29 @@ resource "aws_wafv2_web_acl" "regional_acl" {
     }
   }
 
+  # Rule 5: AWS Managed IP Reputation List
+  rule {
+    name     = "AWSManagedIPReputationList"
+    priority = 5
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesAmazonIpReputationList"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWSManagedIPReputationMetric"
+      sampled_requests_enabled   = true
+    }
+  }
+
   visibility_config {
     cloudwatch_metrics_enabled = true
     metric_name                = "${var.project_name}-waf-metric"
