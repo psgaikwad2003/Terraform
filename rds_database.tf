@@ -143,6 +143,16 @@ resource "aws_db_parameter_group" "postgres" {
     name  = "shared_preload_libraries"
     value = "pg_stat_statements"
   }
+
+  parameter {
+    name  = "rds.force_ssl"
+    value = "1"
+  }
+
+  parameter {
+    name  = "statement_timeout"
+    value = "30000"
+  }
 }
 
 # Primary Multi-AZ RDS Instance
