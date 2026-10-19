@@ -34,11 +34,12 @@ resource "aws_secretsmanager_secret_version" "db_credentials" {
 resource "aws_secretsmanager_secret" "api_keys" {
   name                    = "${var.project_name}/app/api-keys"
   description             = "Third-party external service API keys"
+  kms_key_id              = aws_kms_key.storage_key.arn
   recovery_window_in_days = 7
 
-  tags = {
+  tags = merge(local.common_tags, {
     Name = "${var.project_name}-api-keys"
-  }
+  })
 }
 
 resource "aws_secretsmanager_secret_version" "api_keys" {
@@ -57,11 +58,12 @@ resource "aws_secretsmanager_secret_version" "api_keys" {
 resource "aws_secretsmanager_secret" "jwt_secret" {
   name                    = "${var.project_name}/app/jwt-secret"
   description             = "JWT signing secret for authentication tokens"
+  kms_key_id              = aws_kms_key.storage_key.arn
   recovery_window_in_days = 7
 
-  tags = {
+  tags = merge(local.common_tags, {
     Name = "${var.project_name}-jwt-secret"
-  }
+  })
 }
 
 resource "aws_secretsmanager_secret_version" "jwt_secret" {
