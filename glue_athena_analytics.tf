@@ -30,6 +30,24 @@ resource "aws_s3_bucket_public_access_block" "datalake_public_block" {
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "datalake_lifecycle" {
+  bucket = aws_s3_bucket.data_lake.id
+
+  rule {
+    id     = "datalake-glacier-transition"
+    status = "Enabled"
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+
+    transition {
+      days          = 90
+      storage_class = "GLACIER"
+    }
+  }
+}
+
 # AWS Glue Catalog Database
 resource "aws_glue_catalog_database" "analytics_db" {
   name        = "${replace(var.project_name, "-", "_")}_analytics_db"
