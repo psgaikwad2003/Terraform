@@ -187,3 +187,13 @@ output "api_gateway_url" {
   description = "Items endpoint full URL"
   value       = "${aws_api_gateway_stage.prod_stage.invoke_url}/items"
 }
+
+output "api_gateway_execution_arn" {
+  description = "Execution ARN prefix for REST API Gateway permissions"
+  value       = aws_api_gateway_rest_api.main_api.execution_arn
+}
+
+output "api_gateway_stage_arn" {
+  description = "ARN of the production API Gateway stage"
+  value       = aws_api_gateway_stage.prod_stage.arn
+}
