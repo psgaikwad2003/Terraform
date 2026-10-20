@@ -45,9 +45,10 @@ resource "aws_dynamodb_table" "items_table" {
 
 # Sessions / Cache Table
 resource "aws_dynamodb_table" "sessions_table" {
-  name         = "${var.project_name}-sessions-table"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "session_id"
+  name                        = "${var.project_name}-sessions-table"
+  billing_mode                = "PAY_PER_REQUEST"
+  hash_key                    = "session_id"
+  deletion_protection_enabled = true
 
   attribute {
     name = "session_id"
@@ -129,4 +130,9 @@ output "dynamodb_items_table_arn" {
 output "dynamodb_sessions_table_name" {
   description = "Name of the DynamoDB sessions table"
   value       = aws_dynamodb_table.sessions_table.name
+}
+
+output "dynamodb_sessions_table_arn" {
+  description = "ARN of the DynamoDB sessions table"
+  value       = aws_dynamodb_table.sessions_table.arn
 }
