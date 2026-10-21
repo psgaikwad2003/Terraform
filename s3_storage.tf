@@ -29,6 +29,14 @@ resource "aws_s3_bucket" "assets" {
   }
 }
 
+resource "aws_s3_bucket_public_access_block" "assets" {
+  bucket                  = aws_s3_bucket.assets.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 resource "aws_s3_bucket_versioning" "assets" {
   bucket = aws_s3_bucket.assets.id
   versioning_configuration {
@@ -221,4 +229,25 @@ data "aws_iam_policy_document" "backups_policy" {
 resource "aws_s3_bucket_policy" "backups" {
   bucket = aws_s3_bucket.backups.id
   policy = data.aws_iam_policy_document.backups_policy.json
+}
+
+# Storage Outputs
+output "assets_bucket_name" {
+  description = "Name of the application assets S3 bucket"
+  value       = aws_s3_bucket.assets.id
+}
+
+output "assets_bucket_arn" {
+  description = "ARN of the application assets S3 bucket"
+  value       = aws_s3_bucket.assets.arn
+}
+
+output "logs_bucket_name" {
+  description = "Name of the access logs S3 bucket"
+  value       = aws_s3_bucket.logs.id
+}
+
+output "backups_bucket_arn" {
+  description = "ARN of the compliance backups S3 bucket"
+  value       = aws_s3_bucket.backups.arn
 }
