@@ -107,15 +107,33 @@ resource "aws_ssm_parameter" "app_region" {
 }
 
 resource "aws_ssm_parameter" "feature_dark_mode" {
-  name  = "/${var.project_name}/features/dark-mode"
-  type  = "String"
-  value = "true"
+  name        = "/${var.project_name}/features/dark-mode"
+  description = "Enable dark mode UI feature flag"
+  type        = "String"
+  tier        = "Standard"
+  value       = "true"
+
+  tags = local.common_tags
 }
 
 resource "aws_ssm_parameter" "feature_beta_signup" {
-  name  = "/${var.project_name}/features/beta-signup"
-  type  = "String"
-  value = "false"
+  name        = "/${var.project_name}/features/beta-signup"
+  description = "Enable beta signup access feature flag"
+  type        = "String"
+  tier        = "Standard"
+  value       = "false"
+
+  tags = local.common_tags
+}
+
+resource "aws_ssm_parameter" "rate_limit_rpm" {
+  name        = "/${var.project_name}/api/rate-limit-rpm"
+  description = "Default per-client API rate limit in requests per minute"
+  type        = "String"
+  tier        = "Standard"
+  value       = "1000"
+
+  tags = local.common_tags
 }
 
 # Outputs
@@ -133,4 +151,9 @@ output "api_keys_secret_arn" {
 output "jwt_secret_arn" {
   description = "ARN of the JWT signing secret"
   value       = aws_secretsmanager_secret.jwt_secret.arn
+}
+
+output "ssm_rate_limit_rpm_arn" {
+  description = "ARN of the API rate limit SSM parameter"
+  value       = aws_ssm_parameter.rate_limit_rpm.arn
 }
