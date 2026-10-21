@@ -38,6 +38,12 @@ variable "alb_5xx_threshold" {
   default     = 10
 }
 
+variable "lambda_error_threshold" {
+  description = "Lambda error count alarm threshold"
+  type        = number
+  default     = 5
+}
+
 # SNS Alerting Topic
 resource "aws_sns_topic" "alerts" {
   name              = "${var.project_name}-alerts"
@@ -198,6 +204,30 @@ resource "aws_cloudwatch_metric_alarm" "ecs_memory_high" {
   }
 }
 
+# Lambda Error Metric Alarm
+resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
+  alarm_name          = "${var.project_name}-lambda-errors"
+  alarm_description   = "Lambda execution error count exceeded ${var.lambda_error_threshold}"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "Errors"
+  namespace           = "AWS/Lambda"
+  period              = 300
+  statistic           = "Sum"
+  threshold           = var.lambda_error_threshold
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
+
+  dimensions = {
+    FunctionName = aws_lambda_function.get_items.function_name
+  }
+
+  tags = {
+    Name = "${var.project_name}-lambda-errors-alarm"
+  }
+}
+
 # CloudWatch Operations Dashboard
 resource "aws_cloudwatch_dashboard" "main" {
   dashboard_name = "${var.project_name}-operations"
@@ -266,7 +296,8 @@ resource "aws_cloudwatch_dashboard" "main" {
             aws_cloudwatch_metric_alarm.unhealthy_hosts.arn,
             aws_cloudwatch_metric_alarm.rds_cpu.arn,
             aws_cloudwatch_metric_alarm.rds_free_storage.arn,
-            aws_cloudwatch_metric_alarm.ecs_memory_high.arn
+            aws_cloudwatch_metric_alarm.ecs_memory_high.arn,
+            aws_cloudwatch_metric_alarm.lambda_errors.arn
           ]
         }
       }
