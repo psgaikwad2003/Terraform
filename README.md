@@ -102,3 +102,9 @@ terraform plan
 # Apply infrastructure deployment
 terraform apply
 ```
+
+## Security & Reliability Highlights
+- **Storage Encryption & Public Access Block**: All S3 buckets enforce default server-side encryption and strict S3 Public Access Blocks (`block_public_acls`, `block_public_policy`).
+- **Resilient Data Stores**: Multi-AZ RDS PostgreSQL with SSL enforcement and DynamoDB tables with Point-In-Time Recovery (PITR) and deletion protection enabled.
+- **Observability**: CloudWatch metrics and alarms for EC2, RDS, ALB, and serverless Lambda executions aggregated into a centralized operations dashboard.
+
