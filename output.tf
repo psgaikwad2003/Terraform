@@ -176,3 +176,24 @@ output "cognito_identity_pool_id" {
   description = "ID of the Cognito federated identity pool"
   value       = aws_cognito_identity_pool.main.id
 }
+
+# Real-Time Data Streaming & Ingestion (Kinesis)
+output "kinesis_stream_name" {
+  description = "Name of the central Kinesis real-time events data stream"
+  value       = aws_kinesis_stream.events_stream.name
+}
+
+output "kinesis_stream_arn" {
+  description = "ARN of the central Kinesis real-time events data stream"
+  value       = aws_kinesis_stream.events_stream.arn
+}
+
+output "kinesis_firehose_delivery_stream_name" {
+  description = "Name of the Kinesis Firehose delivery stream feeding the Data Lake"
+  value       = aws_kinesis_firehose_delivery_stream.events_delivery.name
+}
+
+output "kinesis_firehose_delivery_stream_arn" {
+  description = "ARN of the Kinesis Firehose delivery stream feeding the Data Lake"
+  value       = aws_kinesis_firehose_delivery_stream.events_delivery.arn
+}
