@@ -150,3 +150,29 @@ output "glue_catalog_database_name" {
   description = "Name of the central Glue Data Catalog database"
   value       = aws_glue_catalog_database.analytics_db.name
 }
+
+# User Authentication & Identity (Cognito)
+output "cognito_user_pool_id" {
+  description = "ID of the Amazon Cognito user pool"
+  value       = aws_cognito_user_pool.main.id
+}
+
+output "cognito_user_pool_arn" {
+  description = "ARN of the Amazon Cognito user pool"
+  value       = aws_cognito_user_pool.main.arn
+}
+
+output "cognito_user_pool_client_id" {
+  description = "Client ID of the Cognito user pool application client"
+  value       = aws_cognito_user_pool_client.app_client.id
+}
+
+output "cognito_user_pool_domain" {
+  description = "Domain prefix for the Cognito hosted UI authentication endpoint"
+  value       = aws_cognito_user_pool_domain.auth_domain.domain
+}
+
+output "cognito_identity_pool_id" {
+  description = "ID of the Cognito federated identity pool"
+  value       = aws_cognito_identity_pool.main.id
+}
