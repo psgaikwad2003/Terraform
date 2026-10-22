@@ -32,7 +32,9 @@ Production-grade, modular AWS infrastructure provisioned with clean and idiomati
               │                                │                     │
               └────────────────────────────────┴─────────────────────┘
                                    │
-     [ Async & Event Stream: SQS / SNS / EventBridge / Step Functions ]
+     [ Auth & Identity: Amazon Cognito User Pool / Client / Identity Pool ]
+                                    │
+      [ Streaming & Events: Kinesis Streams & Firehose / SQS / SNS / EventBridge ]
                                    │
      [ Governance & Ops: AWS Backup / CloudTrail / AWS Config / SSM / KMS ]
                                    │
@@ -57,6 +59,8 @@ Production-grade, modular AWS infrastructure provisioned with clean and idiomati
 | `efs_filesystem.tf` | Elastic File System (EFS) with access points and lifecycle archive policies |
 | `s3_storage.tf` | S3 buckets for assets, access logs, and compliance backups |
 | `dynamodb.tf` | On-demand DynamoDB tables (items and sessions) with PITR & TTL |
+| `cognito_identity.tf` | Amazon Cognito User Pool, app client, hosted UI domain, and federated Identity Pool |
+| `kinesis_streaming.tf` | Kinesis Data Stream with KMS encryption and Firehose delivery stream targeting Data Lake S3 |
 | `sqs_sns_messaging.tf` | SQS queues with DLQs, FIFO queue, and SNS pub-sub topic integration |
 | `eventbridge_events.tf` | Custom EventBridge bus, event replay archive, and multi-target rules |
 | `lambda_functions.tf` | Serverless Lambda execution roles, handlers, and log groups |
@@ -104,6 +108,8 @@ terraform apply
 ```
 
 ## Security & Reliability Highlights
+- **Identity & Access Management**: Amazon Cognito User Pool with 12+ char password enforcement, verification emails, and federated identity pools.
+- **Real-Time Data Streaming**: Encrypted Amazon Kinesis Data Streams and Firehose buffering partitioned GZIP logs into analytical S3.
 - **Storage Encryption & Public Access Block**: All S3 buckets enforce default server-side encryption and strict S3 Public Access Blocks (`block_public_acls`, `block_public_policy`).
 - **Resilient Data Stores**: Multi-AZ RDS PostgreSQL with SSL enforcement and DynamoDB tables with Point-In-Time Recovery (PITR) and deletion protection enabled.
 - **Observability**: CloudWatch metrics and alarms for EC2, RDS, ALB, and serverless Lambda executions aggregated into a centralized operations dashboard.
