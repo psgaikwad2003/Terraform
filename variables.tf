@@ -86,3 +86,21 @@ variable "enable_flow_logs" {
   type        = bool
   default     = true
 }
+
+variable "cognito_user_pool_name" {
+  description = "Name override for the Amazon Cognito user pool"
+  type        = string
+  default     = ""
+}
+
+variable "kinesis_shard_count" {
+  description = "Number of shards allocated for the Kinesis Data Stream"
+  type        = number
+  default     = 1
+}
+
+variable "kinesis_retention_period_hours" {
+  description = "Length of time data records are accessible after they are added to the Kinesis stream"
+  type        = number
+  default     = 24
+}
