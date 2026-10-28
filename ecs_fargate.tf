@@ -293,7 +293,28 @@ output "ecs_cluster_name" {
   value       = aws_ecs_cluster.main.name
 }
 
+output "ecs_cluster_arn" {
+  description = "ARN of the ECS cluster"
+  value       = aws_ecs_cluster.main.arn
+}
+
+output "ecs_service_name" {
+  description = "Name of the main ECS Fargate service"
+  value       = aws_ecs_service.main_app.name
+}
+
+output "ecs_service_id" {
+  description = "ID of the main ECS Fargate service"
+  value       = aws_ecs_service.main_app.id
+}
+
+output "ecs_task_definition_arn" {
+  description = "ARN of the main ECS task definition"
+  value       = aws_ecs_task_definition.app.arn
+}
+
 output "ecs_alb_dns_name" {
   description = "Application Load Balancer DNS name for ECS"
   value       = aws_lb.ecs_alb.dns_name
 }
+
