@@ -80,6 +80,8 @@ resource "aws_backup_selection" "production_selection" {
 
   resources = [
     aws_efs_file_system.main.arn,
-    aws_db_instance.primary.arn
+    aws_db_instance.primary.arn,
+    aws_dynamodb_table.items_table.arn,
+    aws_dynamodb_table.sessions_table.arn
   ]
 }
