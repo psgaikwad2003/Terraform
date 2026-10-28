@@ -139,3 +139,15 @@ resource "aws_cloudtrail" "main" {
     Name = "${local.name_prefix}-audit-trail"
   })
 }
+
+# Outputs
+output "cloudtrail_bucket_id" {
+  description = "ID of the CloudTrail S3 audit bucket"
+  value       = aws_s3_bucket.cloudtrail_bucket.id
+}
+
+output "cloudtrail_log_group_arn" {
+  description = "ARN of the CloudWatch Log Group receiving CloudTrail security events"
+  value       = aws_cloudwatch_log_group.cloudtrail_logs.arn
+}
+
