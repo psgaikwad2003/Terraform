@@ -49,7 +49,7 @@ Production-grade, modular AWS infrastructure provisioned with clean and idiomati
 | `variables.tf` | Centralized root input variables and validation rules |
 | `main.tf` | Shared local values and environment data sources |
 | `vpc_networking.tf` | Multi-AZ VPC, public/private subnets, NAT Gateway, and Flow Logs |
-| `vpc_endpoints.tf` | VPC Interface Endpoints (SSM, Logs) and DynamoDB Gateway Endpoint |
+| `vpc_endpoints.tf` | VPC Interface Endpoints (SSM, Logs) and S3 / DynamoDB Gateway Endpoints |
 | `security_groups.tf` | Tiered security groups (ALB, Web, DB, Lambda, EFS, Redis, Bastion) |
 | `kms_encryption.tf` | Customer Managed Keys (CMK) with automated rotation for storage and databases |
 | `ec2_autoscaling.tf` | Self-healing EC2 Auto Scaling fleet with Launch Template & ALB |
@@ -58,7 +58,7 @@ Production-grade, modular AWS infrastructure provisioned with clean and idiomati
 | `elasticache_redis.tf` | ElastiCache Redis replication group with automatic failover and multi-AZ |
 | `efs_filesystem.tf` | Elastic File System (EFS) with access points and lifecycle archive policies |
 | `s3_storage.tf` | S3 buckets for assets, access logs, and compliance backups |
-| `dynamodb.tf` | On-demand DynamoDB tables (items and sessions) with PITR & TTL |
+| `dynamodb.tf` | On-demand DynamoDB tables with Point-in-Time Recovery, TTL, and CDC Streams |
 | `cognito_identity.tf` | Amazon Cognito User Pool, app client, hosted UI domain, and federated Identity Pool |
 | `kinesis_streaming.tf` | Kinesis Data Stream with KMS encryption and Firehose delivery stream targeting Data Lake S3 |
 | `sqs_sns_messaging.tf` | SQS queues with DLQs, FIFO queue, and SNS pub-sub topic integration |
@@ -66,12 +66,12 @@ Production-grade, modular AWS infrastructure provisioned with clean and idiomati
 | `lambda_functions.tf` | Serverless Lambda execution roles, handlers, and log groups |
 | `step_functions.tf` | Step Functions state machine orchestrating transactional workflows |
 | `api_gateway.tf` | REST API Gateway endpoints, proxy integrations, and stages |
-| `route53_dns.tf` | Route 53 private hosted zone, internal DNS records, and ACM certificates |
+| `route53_dns.tf` | Route 53 private hosted zone, internal DNS records (DB, Redis, EFS), and ACM certificates |
 | `cloudfront_cdn.tf` | Global CloudFront CDN with Origin Access Control and security headers |
-| `waf_firewall.tf` | AWS WAFv2 regional Web ACL with rate limiting and managed OWASP rule groups |
-| `backup_recovery.tf` | AWS Backup centralized vault, automated backup plans, and resource tagging |
-| `cloudtrail_audit.tf` | Multi-region CloudTrail auditing with secure encrypted S3 bucket |
-| `aws_config_governance.tf` | AWS Config configuration recorder, delivery channel, and compliance rules |
+| `waf_firewall.tf` | AWS WAFv2 regional Web ACL protecting EC2 & ECS ALBs with rate limiting and OWASP rules |
+| `backup_recovery.tf` | Centralized AWS Backup vault and plans protecting RDS, EFS, and DynamoDB |
+| `cloudtrail_audit.tf` | Multi-region CloudTrail auditing with secure encrypted S3 bucket and CloudWatch logs |
+| `aws_config_governance.tf` | AWS Config configuration recorder, delivery channel, and compliance rules (EBS, S3, RDS) |
 | `ssm_automation.tf` | Systems Manager parameter store configs and fleet maintenance windows |
 | `cicd_pipeline.tf` | Continuous integration and deployment via AWS CodePipeline & CodeBuild |
 | `glue_athena_analytics.tf` | Data lake bucket, Glue Data Catalog database, crawler, and Athena workgroup |
@@ -109,8 +109,11 @@ terraform apply
 
 ## Security & Reliability Highlights
 - **Identity & Access Management**: Amazon Cognito User Pool with 12+ char password enforcement, verification emails, and federated identity pools.
-- **Real-Time Data Streaming**: Encrypted Amazon Kinesis Data Streams and Firehose buffering partitioned GZIP logs into analytical S3.
-- **Storage Encryption & Public Access Block**: All S3 buckets enforce default server-side encryption and strict S3 Public Access Blocks (`block_public_acls`, `block_public_policy`).
-- **Resilient Data Stores**: Multi-AZ RDS PostgreSQL with SSL enforcement and DynamoDB tables with Point-In-Time Recovery (PITR) and deletion protection enabled.
-- **Observability**: CloudWatch metrics and alarms for EC2, RDS, ALB, and serverless Lambda executions aggregated into a centralized operations dashboard.
+- **Perimeter Defense**: AWS WAFv2 Web ACL safeguarding both EC2 fleet and ECS container Application Load Balancers against OWASP Top 10 exploits and DDoS attacks.
+- **Cost-Optimized VPC Networking**: Dedicated S3 and DynamoDB Gateway VPC endpoints delivering high-throughput internal routing with zero NAT data transfer fees.
+- **Comprehensive Stateful Backup**: Centralized AWS Backup schedules safeguarding RDS PostgreSQL, Elastic File Systems (EFS), and DynamoDB tables.
+- **Real-Time Data Streaming & CDC**: Encrypted Amazon Kinesis Data Streams and DynamoDB Streams capturing change events and feeding analytical S3 data lakes.
+- **Automated Governance**: AWS Config continuous compliance rules enforcing encryption on attached EBS volumes, S3 bucket privacy, and RDS storage encryption.
+- **Internal Service Discovery**: Route 53 private hosted zone managing internal CNAME records for RDS, ElastiCache Redis, and EFS storage mount targets.
+- **Observability & Auditing**: Multi-region CloudTrail logging streamed to CloudWatch Logs, alongside CloudWatch alarms and budget tracking on a centralized operations dashboard.
 
