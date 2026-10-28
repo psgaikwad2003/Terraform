@@ -154,3 +154,19 @@ resource "aws_config_config_rule" "s3_public_read_prohibited" {
 
   tags = local.common_tags
 }
+
+# Compliance Rule: Ensure all RDS database instances have storage encryption enabled
+resource "aws_config_config_rule" "rds_storage_encrypted" {
+  name        = "${var.project_name}-rds-storage-encrypted"
+  description = "Checks whether storage encryption is enabled for your RDS DB instances"
+
+  source {
+    owner             = "AWS"
+    source_identifier = "RDS_STORAGE_ENCRYPTED"
+  }
+
+  depends_on = [aws_config_configuration_recorder_status.main]
+
+  tags = local.common_tags
+}
+
