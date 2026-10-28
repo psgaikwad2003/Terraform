@@ -102,3 +102,20 @@ resource "aws_sqs_queue_policy" "app_queue_policy" {
     ]
   })
 }
+
+# Outputs
+output "sqs_standard_dlq_arn" {
+  description = "ARN of the standard dead-letter queue"
+  value       = aws_sqs_queue.app_dlq.arn
+}
+
+output "sqs_orders_fifo_dlq_arn" {
+  description = "ARN of the transactional FIFO dead-letter queue"
+  value       = aws_sqs_queue.orders_fifo_dlq.arn
+}
+
+output "sns_tasks_subscription_arn" {
+  description = "ARN of the SNS-to-SQS tasks subscription"
+  value       = aws_sns_topic_subscription.queue_subscription.arn
+}
+
