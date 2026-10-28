@@ -45,6 +45,22 @@ resource "aws_vpc_endpoint" "dynamodb_endpoint" {
   })
 }
 
+# S3 Gateway Endpoint
+resource "aws_vpc_endpoint" "s3_endpoint" {
+  vpc_id            = aws_vpc.main.id
+  service_name      = "com.amazonaws.${var.aws_region}.s3"
+  vpc_endpoint_type = "Gateway"
+
+  route_table_ids = [
+    aws_route_table.public_rt.id,
+    aws_route_table.private_rt.id
+  ]
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-s3-gateway-endpoint"
+  })
+}
+
 # Interface Endpoint: AWS Systems Manager (SSM)
 resource "aws_vpc_endpoint" "ssm_endpoint" {
   vpc_id              = aws_vpc.main.id
