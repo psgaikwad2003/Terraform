@@ -310,7 +310,7 @@ output "ecs_service_id" {
 
 output "ecs_task_definition_arn" {
   description = "ARN of the main ECS task definition"
-  value       = aws_ecs_task_definition.app.arn
+  value       = aws_ecs_task_definition.main_app.arn
 }
 
 output "ecs_alb_dns_name" {
