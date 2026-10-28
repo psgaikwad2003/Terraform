@@ -25,6 +25,9 @@ resource "aws_dynamodb_table" "items_table" {
     projection_type = "ALL"
   }
 
+  stream_enabled   = true
+  stream_view_type = "NEW_AND_OLD_IMAGES"
+
   point_in_time_recovery {
     enabled = true
   }
@@ -42,6 +45,7 @@ resource "aws_dynamodb_table" "items_table" {
     Name = "${var.project_name}-items-table"
   }
 }
+
 
 # Sessions / Cache Table
 resource "aws_dynamodb_table" "sessions_table" {
@@ -136,3 +140,9 @@ output "dynamodb_sessions_table_arn" {
   description = "ARN of the DynamoDB sessions table"
   value       = aws_dynamodb_table.sessions_table.arn
 }
+
+output "dynamodb_items_table_stream_arn" {
+  description = "ARN of the DynamoDB items table event stream"
+  value       = aws_dynamodb_table.items_table.stream_arn
+}
+
