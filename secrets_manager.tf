@@ -136,6 +136,27 @@ resource "aws_ssm_parameter" "rate_limit_rpm" {
   tags = local.common_tags
 }
 
+resource "aws_ssm_parameter" "feature_maintenance_mode" {
+  name        = "/${var.project_name}/features/maintenance-mode"
+  description = "Enable global maintenance mode kill-switch"
+  type        = "String"
+  tier        = "Standard"
+  value       = "false"
+
+  tags = local.common_tags
+}
+
+resource "aws_ssm_parameter" "api_cors_origins" {
+  name        = "/${var.project_name}/api/cors-origins"
+  description = "Allowed origins for API CORS preflight validation"
+  type        = "String"
+  tier        = "Standard"
+  value       = "https://*.${var.project_name}.com"
+
+  tags = local.common_tags
+}
+
+
 # Outputs
 output "app_db_secret_arn" {
   description = "ARN of the application database credentials secret"
