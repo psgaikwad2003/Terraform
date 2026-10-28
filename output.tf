@@ -197,3 +197,26 @@ output "kinesis_firehose_delivery_stream_arn" {
   description = "ARN of the Kinesis Firehose delivery stream feeding the Data Lake"
   value       = aws_kinesis_firehose_delivery_stream.events_delivery.arn
 }
+
+# Networking & Service Discovery Endpoints
+output "s3_vpc_gateway_endpoint_id" {
+  description = "ID of the S3 VPC Gateway Endpoint"
+  value       = aws_vpc_endpoint.s3_endpoint.id
+}
+
+output "route53_private_zone_id" {
+  description = "ID of the internal Route 53 private hosted zone"
+  value       = aws_route53_zone.internal.zone_id
+}
+
+# Continuous Delivery Pipeline
+output "cicd_codepipeline_arn" {
+  description = "ARN of the application CI/CD CodePipeline"
+  value       = aws_codepipeline.app_pipeline.arn
+}
+
+# Change Data Capture Streaming
+output "dynamodb_items_stream_arn" {
+  description = "ARN of the DynamoDB items table CDC event stream"
+  value       = aws_dynamodb_table.items_table.stream_arn
+}
