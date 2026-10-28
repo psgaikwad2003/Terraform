@@ -238,3 +238,30 @@ resource "aws_codepipeline" "app_pipeline" {
     Name = "${local.name_prefix}-codepipeline"
   })
 }
+
+# Outputs
+output "codepipeline_name" {
+  description = "Name of the continuous deployment CodePipeline"
+  value       = aws_codepipeline.app_pipeline.name
+}
+
+output "codepipeline_arn" {
+  description = "ARN of the continuous deployment CodePipeline"
+  value       = aws_codepipeline.app_pipeline.arn
+}
+
+output "codebuild_project_name" {
+  description = "Name of the CodeBuild application build project"
+  value       = aws_codebuild_project.app_build.name
+}
+
+output "codebuild_project_arn" {
+  description = "ARN of the CodeBuild application build project"
+  value       = aws_codebuild_project.app_build.arn
+}
+
+output "pipeline_artifacts_bucket_id" {
+  description = "ID of the S3 bucket hosting pipeline artifacts"
+  value       = aws_s3_bucket.pipeline_artifacts.id
+}
+
