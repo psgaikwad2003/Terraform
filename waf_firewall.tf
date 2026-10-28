@@ -150,8 +150,14 @@ resource "aws_wafv2_web_acl" "regional_acl" {
   })
 }
 
-# Association with Public Application Load Balancer
+# Association with Public Application Load Balancers
 resource "aws_wafv2_web_acl_association" "alb_waf" {
   resource_arn = aws_lb.main.arn
   web_acl_arn  = aws_wafv2_web_acl.regional_acl.arn
 }
+
+resource "aws_wafv2_web_acl_association" "ecs_alb_waf" {
+  resource_arn = aws_lb.ecs_alb.arn
+  web_acl_arn  = aws_wafv2_web_acl.regional_acl.arn
+}
+
