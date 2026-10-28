@@ -34,6 +34,15 @@ resource "aws_route53_record" "redis_internal" {
   records = [aws_elasticache_replication_group.redis_cluster.primary_endpoint_address]
 }
 
+# Internal service record pointing to EFS filesystem
+resource "aws_route53_record" "efs_internal" {
+  zone_id = aws_route53_zone.internal.zone_id
+  name    = "efs.corp.${var.project_name}.internal"
+  type    = "CNAME"
+  ttl     = 300
+  records = [aws_efs_file_system.main.dns_name]
+}
+
 # ACM SSL/TLS Certificate for secure HTTPS transport
 resource "aws_acm_certificate" "app_cert" {
   domain_name       = "api.${var.project_name}.com"
@@ -65,3 +74,20 @@ resource "aws_route53_health_check" "app_health" {
     Name = "${local.name_prefix}-r53-healthcheck"
   })
 }
+
+# Outputs
+output "route53_internal_zone_id" {
+  description = "ID of the private internal Route 53 zone"
+  value       = aws_route53_zone.internal.zone_id
+}
+
+output "route53_internal_zone_name" {
+  description = "Domain name of the private internal Route 53 zone"
+  value       = aws_route53_zone.internal.name
+}
+
+output "acm_certificate_arn" {
+  description = "ARN of the provisioned ACM TLS certificate"
+  value       = aws_acm_certificate.app_cert.arn
+}
+
