@@ -82,6 +82,16 @@ output "kms_database_key_arn" {
   value       = aws_kms_key.database_key.arn
 }
 
+output "kms_storage_alias_name" {
+  description = "Alias name for the storage encryption key"
+  value       = aws_kms_alias.storage_key_alias.name
+}
+
+output "kms_database_alias_name" {
+  description = "Alias name for the database encryption key"
+  value       = aws_kms_alias.database_key_alias.name
+}
+
 # Caching & Persistent Storage
 output "elasticache_redis_endpoint" {
   description = "Primary endpoint address for the ElastiCache Redis cluster"
