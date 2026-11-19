@@ -6,6 +6,7 @@
 resource "aws_dynamodb_table" "items_table" {
   name                        = "${var.project_name}-items-table"
   billing_mode                = "PAY_PER_REQUEST"
+  table_class                 = "STANDARD"
   hash_key                    = "id"
   deletion_protection_enabled = true
 
@@ -51,6 +52,7 @@ resource "aws_dynamodb_table" "items_table" {
 resource "aws_dynamodb_table" "sessions_table" {
   name                        = "${var.project_name}-sessions-table"
   billing_mode                = "PAY_PER_REQUEST"
+  table_class                 = "STANDARD"
   hash_key                    = "session_id"
   deletion_protection_enabled = true
 
