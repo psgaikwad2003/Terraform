@@ -5,7 +5,7 @@
 # KMS Key for General Storage & Object Encryption
 resource "aws_kms_key" "storage_key" {
   description             = "Customer managed key for ${var.project_name} storage encryption"
-  deletion_window_in_days = 30
+  deletion_window_in_days = var.kms_deletion_window_days
   enable_key_rotation     = true
 
   policy = jsonencode({
@@ -55,7 +55,7 @@ resource "aws_kms_alias" "storage_key_alias" {
 # KMS Key for Database and Persistent Volumes
 resource "aws_kms_key" "database_key" {
   description             = "Customer managed key for ${var.project_name} database and volume encryption"
-  deletion_window_in_days = 30
+  deletion_window_in_days = var.kms_deletion_window_days
   enable_key_rotation     = true
 
   policy = jsonencode({

@@ -104,3 +104,9 @@ variable "kinesis_retention_period_hours" {
   type        = number
   default     = 24
 }
+
+variable "kms_deletion_window_days" {
+  description = "Duration in days after which the key is deleted upon destruction"
+  type        = number
+  default     = 30
+}
