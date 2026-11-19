@@ -1,0 +1,31 @@
+# Example Terraform Variables Configuration
+# Copy this file to `terraform.tfvars` and customize for your environment.
+
+aws_region   = "us-east-1"
+environment  = "production"
+project_name = "my-company-app"
+cost_center  = "engineering"
+
+# Networking Configuration
+vpc_cidr             = "10.0.0.0/16"
+public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnet_cidrs = ["10.0.101.0/24", "10.0.102.0/24"]
+enable_dns_support   = true
+enable_flow_logs     = true
+
+# ElastiCache Redis
+redis_node_type = "cache.t4g.small"
+
+# WAF Security
+waf_rate_limit = 2000
+
+# Custom Domain & DNS
+custom_domain_name = "example.com"
+
+# Big Data & Analytics Limits
+datalake_glacier_transition_days = 90
+athena_query_cutoff_gb           = 10
+
+# Real-Time Ingestion (Kinesis)
+kinesis_shard_count            = 1
+kinesis_retention_period_hours = 24
