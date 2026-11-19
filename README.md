@@ -107,6 +107,12 @@ terraform plan
 terraform apply
 ```
 
+## CI/CD & Quality Assurance
+
+- **GitHub Actions Workflows**: Automated Terraform formatting, syntax validation, and Trivy config vulnerability scans on every pull request and push to `main`.
+- **Pre-commit Hooks**: Enforces trailing whitespace cleanup, JSON/YAML linting, and automated `terraform fmt` prior to commit creation.
+- **Example Variable Configuration**: `terraform.tfvars.example` provides a documented baseline for environment customization.
+
 ## Security & Reliability Highlights
 - **Identity & Access Management**: Amazon Cognito User Pool with 12+ char password enforcement, verification emails, and federated identity pools.
 - **Perimeter Defense**: AWS WAFv2 Web ACL safeguarding both EC2 fleet and ECS container Application Load Balancers against OWASP Top 10 exploits and DDoS attacks.
