@@ -145,6 +145,12 @@ resource "aws_wafv2_web_acl" "regional_acl" {
     sampled_requests_enabled   = true
   }
 
+  custom_response_body {
+    key          = "blocked-response"
+    content      = "{\"error\": \"Access denied by security firewall policy\"}"
+    content_type = "APPLICATION_JSON"
+  }
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-regional-waf"
   })
