@@ -216,8 +216,9 @@ resource "aws_db_instance" "replica" {
   skip_final_snapshot                 = true
   iam_database_authentication_enabled = true
 
-  performance_insights_enabled = true
-  monitoring_interval          = 60
+  performance_insights_enabled          = true
+  performance_insights_retention_period = 7
+  monitoring_interval                   = 60
   monitoring_role_arn          = aws_iam_role.rds_monitoring.arn
 
   tags = {
