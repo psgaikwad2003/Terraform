@@ -4,10 +4,11 @@
 
 # 1. Application Database Master Credentials
 resource "aws_secretsmanager_secret" "db_credentials" {
-  name                    = "${var.project_name}/database/credentials"
-  description             = "Application database connection credentials"
-  kms_key_id              = aws_kms_key.database_key.arn
-  recovery_window_in_days = 7
+  name                            = "${var.project_name}/database/credentials"
+  description                     = "Application database connection credentials"
+  kms_key_id                      = aws_kms_key.database_key.arn
+  recovery_window_in_days         = 7
+  force_overwrite_replica_secret  = false
 
   tags = merge(local.common_tags, {
     Name = "${var.project_name}-db-credentials"
