@@ -115,7 +115,8 @@ terraform apply
 
 ## Security & Reliability Highlights
 - **Identity & Access Management**: Amazon Cognito User Pool with 12+ char password enforcement, verification emails, and federated identity pools.
-- **Perimeter Defense**: AWS WAFv2 Web ACL safeguarding both EC2 fleet and ECS container Application Load Balancers against OWASP Top 10 exploits and DDoS attacks.
+- **Perimeter Defense**: AWS WAFv2 Web ACL safeguarding both EC2 fleet and ECS container Application Load Balancers against OWASP Top 10 exploits, DDoS attacks, and GeoMatch geographical filtering with custom JSON block responses.
+- **Relational Databases & Storage**: Multi-AZ RDS PostgreSQL with asynchronous read replica, Performance Insights monitoring, automated snapshots, and Secrets Manager credential management.
 - **Cost-Optimized VPC Networking**: Dedicated S3 and DynamoDB Gateway VPC endpoints delivering high-throughput internal routing with zero NAT data transfer fees.
 - **Comprehensive Stateful Backup**: Centralized AWS Backup schedules safeguarding RDS PostgreSQL, Elastic File Systems (EFS), and DynamoDB tables.
 - **Real-Time Data Streaming & CDC**: Encrypted Amazon Kinesis Data Streams and DynamoDB Streams capturing change events and feeding analytical S3 data lakes.
