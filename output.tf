@@ -140,6 +140,11 @@ output "cloudtrail_arn" {
   value       = aws_cloudtrail.main.arn
 }
 
+output "cloudwatch_operations_dashboard_name" {
+  description = "Name of the central CloudWatch operations dashboard"
+  value       = aws_cloudwatch_dashboard.main.dashboard_name
+}
+
 # Workflow Orchestration & Analytics
 output "step_functions_state_machine_arn" {
   description = "ARN of the order processing Step Functions state machine"
