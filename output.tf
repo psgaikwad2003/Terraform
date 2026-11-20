@@ -145,6 +145,11 @@ output "cloudwatch_operations_dashboard_name" {
   value       = aws_cloudwatch_dashboard.main.dashboard_name
 }
 
+output "ssm_maintenance_window_name" {
+  description = "Name of the Systems Manager weekly maintenance window"
+  value       = aws_ssm_maintenance_window.weekly_patching.name
+}
+
 # Workflow Orchestration & Analytics
 output "step_functions_state_machine_arn" {
   description = "ARN of the order processing Step Functions state machine"
