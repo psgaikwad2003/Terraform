@@ -140,17 +140,23 @@ resource "aws_lambda_function" "delete_item" {
 # CloudWatch Log Groups
 resource "aws_cloudwatch_log_group" "get_items_logs" {
   name              = "/aws/lambda/${aws_lambda_function.get_items.function_name}"
-  retention_in_days = 14
+  retention_in_days = 30
+  kms_key_id        = aws_kms_key.storage_key.arn
+  tags              = local.common_tags
 }
 
 resource "aws_cloudwatch_log_group" "create_item_logs" {
   name              = "/aws/lambda/${aws_lambda_function.create_item.function_name}"
-  retention_in_days = 14
+  retention_in_days = 30
+  kms_key_id        = aws_kms_key.storage_key.arn
+  tags              = local.common_tags
 }
 
 resource "aws_cloudwatch_log_group" "delete_item_logs" {
   name              = "/aws/lambda/${aws_lambda_function.delete_item.function_name}"
-  retention_in_days = 14
+  retention_in_days = 30
+  kms_key_id        = aws_kms_key.storage_key.arn
+  tags              = local.common_tags
 }
 
 # Outputs
