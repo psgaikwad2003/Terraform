@@ -171,9 +171,10 @@ resource "aws_launch_template" "app" {
   user_data = base64encode(<<-EOF
     #!/bin/bash
     yum update -y
-    yum install -y amazon-ssm-agent
+    yum install -y amazon-ssm-agent amazon-cloudwatch-agent
     systemctl enable amazon-ssm-agent
     systemctl start amazon-ssm-agent
+    systemctl enable amazon-cloudwatch-agent
     echo "Server healthy" > /var/www/html/health
   EOF
   )
