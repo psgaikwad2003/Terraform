@@ -139,6 +139,32 @@ resource "aws_wafv2_web_acl" "regional_acl" {
     }
   }
 
+  # Rule 6: Geo Match Rule
+  rule {
+    name     = "GeoMatchRule"
+    priority = 6
+
+    action {
+      count {}
+    }
+
+    statement {
+      not_statement {
+        statement {
+          geo_match_statement {
+            country_codes = var.allowed_countries
+          }
+        }
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "GeoMatchRuleMetric"
+      sampled_requests_enabled   = true
+    }
+  }
+
   visibility_config {
     cloudwatch_metrics_enabled = true
     metric_name                = "${var.project_name}-waf-metric"

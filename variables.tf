@@ -110,3 +110,9 @@ variable "kms_deletion_window_days" {
   type        = number
   default     = 30
 }
+
+variable "allowed_countries" {
+  description = "List of ISO country codes allowed to access application endpoints"
+  type        = list(string)
+  default     = ["US", "CA", "GB", "DE", "IN"]
+}
