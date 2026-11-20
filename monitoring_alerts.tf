@@ -300,6 +300,22 @@ resource "aws_cloudwatch_dashboard" "main" {
             aws_cloudwatch_metric_alarm.lambda_errors.arn
           ]
         }
+      },
+      {
+        type   = "metric"
+        x      = 0
+        y      = 12
+        width  = 12
+        height = 6
+        properties = {
+          title  = "Kinesis Ingestion & Egress Throughput"
+          view   = "timeSeries"
+          period = 60
+          metrics = [
+            ["AWS/Kinesis", "IncomingRecords", "StreamName", aws_kinesis_stream.events_stream.name],
+            ["AWS/Kinesis", "OutgoingRecords", "StreamName", aws_kinesis_stream.events_stream.name]
+          ]
+        }
       }
     ]
   })
