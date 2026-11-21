@@ -8,6 +8,10 @@ resource "aws_sqs_queue" "app_dlq" {
   message_retention_seconds = 1209600 # 14 days
   kms_master_key_id         = aws_kms_key.storage_key.arn
 
+  redrive_allow_policy = jsonencode({
+    redrivePermission = "allowAll"
+  })
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-standard-dlq"
   })
