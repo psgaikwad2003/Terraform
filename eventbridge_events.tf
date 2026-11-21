@@ -63,4 +63,13 @@ resource "aws_cloudwatch_event_target" "cw_logs_target" {
   event_bus_name = aws_cloudwatch_event_bus.app_bus.name
   target_id      = "SendToCloudWatchAudit"
   arn            = aws_cloudwatch_log_group.eventbridge_logs.arn
+
+  dead_letter_config {
+    arn = aws_sqs_queue.app_dlq.arn
+  }
+
+  retry_policy {
+    maximum_event_age_in_seconds = 3600
+    maximum_retry_attempts       = 3
+  }
 }
