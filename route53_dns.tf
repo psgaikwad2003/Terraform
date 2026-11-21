@@ -69,6 +69,8 @@ resource "aws_route53_health_check" "app_health" {
   resource_path     = "/health"
   failure_threshold = "3"
   request_interval  = "30"
+  measure_latency   = true
+  enable_sni        = false
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-r53-healthcheck"
