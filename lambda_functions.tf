@@ -89,6 +89,7 @@ resource "aws_lambda_function" "create_item" {
   role             = aws_iam_role.lambda_exec_role.arn
   handler          = "index.handler"
   runtime          = "nodejs20.x"
+  architectures    = ["arm64"]
   timeout          = 30
   memory_size      = 256
   filename         = "${path.module}/lambda_payload.zip"
@@ -116,6 +117,7 @@ resource "aws_lambda_function" "delete_item" {
   role             = aws_iam_role.lambda_exec_role.arn
   handler          = "index.handler"
   runtime          = "nodejs20.x"
+  architectures    = ["arm64"]
   timeout          = 30
   memory_size      = 128
   filename         = "${path.module}/lambda_payload.zip"
