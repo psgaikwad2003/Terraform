@@ -150,6 +150,11 @@ output "ssm_maintenance_window_name" {
   value       = aws_ssm_maintenance_window.weekly_patching.name
 }
 
+output "lambda_execution_role_arn" {
+  description = "ARN of the IAM role assumed by serverless Lambda functions"
+  value       = aws_iam_role.lambda_exec_role.arn
+}
+
 # Workflow Orchestration & Analytics
 output "step_functions_state_machine_arn" {
   description = "ARN of the order processing Step Functions state machine"
