@@ -130,9 +130,17 @@ resource "aws_api_gateway_deployment" "api_deployment" {
   }
 }
 
+resource "aws_api_gateway_request_validator" "body_and_params" {
+  name                        = "${var.project_name}-request-validator"
+  rest_api_id                 = aws_api_gateway_rest_api.main_api.id
+  validate_request_body       = true
+  validate_request_parameters = true
+}
+
 resource "aws_cloudwatch_log_group" "api_gw_logs" {
   name              = "/aws/api-gateway/${var.project_name}-logs"
-  retention_in_days = 14
+  retention_in_days = 30
+  kms_key_id        = aws_kms_key.storage_key.arn
 }
 
 resource "aws_api_gateway_stage" "prod_stage" {
