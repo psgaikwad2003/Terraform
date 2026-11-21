@@ -121,6 +121,8 @@ terraform apply
 - **Comprehensive Stateful Backup**: Centralized AWS Backup schedules safeguarding RDS PostgreSQL, Elastic File Systems (EFS), and DynamoDB tables.
 - **Real-Time Data Streaming & CDC**: Encrypted Amazon Kinesis Data Streams and DynamoDB Streams capturing change events and feeding analytical S3 data lakes.
 - **Automated Governance**: AWS Config continuous compliance rules enforcing encryption on attached EBS volumes, S3 bucket privacy, and RDS storage encryption.
+- **Asynchronous Resiliency**: SQS Dead-Letter Queues (DLQs) with redrive allow policies and EventBridge delivery retry policies isolating poison pills.
+- **API Protection & Strict Validation**: REST API Gateway with centralized request body/parameter validation and structured JSON access logging.
 - **Internal Service Discovery**: Route 53 private hosted zone managing internal CNAME records for RDS, ElastiCache Redis, and EFS storage mount targets.
 - **Observability & Auditing**: Multi-region CloudTrail logging streamed to CloudWatch Logs, alongside CloudWatch alarms and budget tracking on a centralized operations dashboard.
 
