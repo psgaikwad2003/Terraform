@@ -122,3 +122,9 @@ variable "allowed_countries" {
   type        = list(string)
   default     = ["US", "CA", "GB", "DE", "IN"]
 }
+
+variable "rds_storage_type" {
+  description = "Storage type allocated for RDS database instances (e.g., gp3, io1)"
+  type        = string
+  default     = "gp3"
+}
