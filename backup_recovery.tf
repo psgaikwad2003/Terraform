@@ -12,6 +12,33 @@ resource "aws_backup_vault" "main" {
   })
 }
 
+# Access policy restricting AWS Backup vault deletions
+resource "aws_backup_vault_policy" "main_vault_policy" {
+  backup_vault_name = aws_backup_vault.main.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "DenyExternalVaultDeletion"
+        Effect = "Deny"
+        Principal = {
+          AWS = "*"
+        }
+        Action = [
+          "backup:DeleteBackupVault"
+        ]
+        Resource = aws_backup_vault.main.arn
+        Condition = {
+          Bool = {
+            "aws:PrincipalIsAWSService" = "false"
+          }
+        }
+      }
+    ]
+  })
+}
+
 # IAM Role assumed by AWS Backup service
 resource "aws_iam_role" "backup_role" {
   name = "${var.project_name}-backup-service-role"
