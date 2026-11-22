@@ -109,6 +109,8 @@ terraform apply
 
 ## CI/CD & Quality Assurance
 
+- **Makefile Automation**: Standardized targets (`make init`, `make fmt`, `make validate`, `make check`, `make plan`).
+- **Hygiene & Validation Scripts**: Cross-platform check scripts (`scripts/check.sh` and `scripts/check.ps1`) for local CI simulation.
 - **GitHub Actions Workflows**: Automated Terraform formatting, syntax validation, and Trivy config vulnerability scans on every pull request and push to `main`.
 - **Pre-commit Hooks**: Enforces trailing whitespace cleanup, JSON/YAML linting, and automated `terraform fmt` prior to commit creation.
 - **Example Variable Configuration**: `terraform.tfvars.example` provides a documented baseline for environment customization.
