@@ -170,3 +170,18 @@ resource "aws_config_config_rule" "rds_storage_encrypted" {
   tags = local.common_tags
 }
 
+# Compliance Rule: Ensure all EFS filesystems have encryption enabled
+resource "aws_config_config_rule" "efs_encrypted_check" {
+  name        = "${var.project_name}-efs-encrypted-check"
+  description = "Checks whether Amazon EFS file systems are configured to encrypt data at rest"
+
+  source {
+    owner             = "AWS"
+    source_identifier = "EFS_ENCRYPTED_CHECK"
+  }
+
+  depends_on = [aws_config_configuration_recorder_status.main]
+
+  tags = local.common_tags
+}
+
