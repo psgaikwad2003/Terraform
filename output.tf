@@ -155,6 +155,11 @@ output "lambda_execution_role_arn" {
   value       = aws_iam_role.lambda_exec_role.arn
 }
 
+output "backup_production_plan_id" {
+  description = "ID of the production AWS Backup plan"
+  value       = aws_backup_plan.production_plan.id
+}
+
 # Workflow Orchestration & Analytics
 output "step_functions_state_machine_arn" {
   description = "ARN of the order processing Step Functions state machine"
