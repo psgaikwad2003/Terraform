@@ -115,6 +115,10 @@ resource "aws_sfn_state_machine" "order_workflow" {
     level                  = "ALL"
   }
 
+  tracing_configuration {
+    enabled = true
+  }
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-order-workflow"
   })
