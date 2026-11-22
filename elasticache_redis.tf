@@ -49,6 +49,7 @@ resource "aws_elasticache_replication_group" "redis_cluster" {
   multi_az_enabled           = true
 
   at_rest_encryption_enabled = true
+  transit_encryption_enabled = true
   kms_key_id                 = aws_kms_key.database_key.arn
 
   snapshot_retention_limit   = 7
