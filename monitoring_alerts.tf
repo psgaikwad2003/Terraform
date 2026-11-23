@@ -85,6 +85,8 @@ resource "aws_cloudwatch_metric_alarm" "high_cpu" {
   alarm_actions       = [aws_sns_topic.alerts.arn, aws_autoscaling_policy.cpu_tracking.arn]
   ok_actions          = [aws_sns_topic.alerts.arn]
 
+  ok_actions = [aws_sns_topic.alerts.arn]
+
   dimensions = {
     AutoScalingGroupName = aws_autoscaling_group.app.name
   }
