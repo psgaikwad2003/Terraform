@@ -115,6 +115,12 @@ terraform apply
 - **Pre-commit Hooks**: Enforces trailing whitespace cleanup, JSON/YAML linting, and automated `terraform fmt` prior to commit creation.
 - **Example Variable Configuration**: `terraform.tfvars.example` provides a documented baseline for environment customization.
 
+## Infrastructure Resiliency Updates (23 Nov)
+
+- **Database Performance Tuning**: PostgreSQL configured with 60-second idle transaction timeout to eliminate idle connection lock contention.
+- **Data Compression & Efficiency**: API Gateway payload compression enabled for responses exceeding 1 KB, reducing egress latency and bandwidth.
+- **Bucket Security Enforcement**: S3 access logging buckets enforced with `BucketOwnerEnforced` ACL-free ownership policies.
+
 ## Operational Hardening & Architecture Updates
 
 - **High-Resolution Network Auditing**: VPC Flow Logs configured with 1-minute aggregation intervals for rapid anomaly detection.
