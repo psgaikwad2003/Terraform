@@ -153,6 +153,11 @@ resource "aws_db_parameter_group" "postgres" {
     name  = "statement_timeout"
     value = "30000"
   }
+
+  parameter {
+    name  = "idle_in_transaction_session_timeout"
+    value = "60000"
+  }
 }
 
 # Primary Multi-AZ RDS Instance
