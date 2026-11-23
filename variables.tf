@@ -27,6 +27,12 @@ variable "cost_center" {
   default     = "engineering"
 }
 
+variable "enable_deletion_protection" {
+  description = "Global toggle for database and storage deletion protection"
+  type        = bool
+  default     = true
+}
+
 variable "vpc_cidr" {
   description = "CIDR block for the Virtual Private Cloud"
   type        = string
