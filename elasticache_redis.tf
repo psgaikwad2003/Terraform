@@ -28,6 +28,11 @@ resource "aws_elasticache_parameter_group" "redis_params" {
     value = "Ex"
   }
 
+  parameter {
+    name  = "timeout"
+    value = "300"
+  }
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-redis-params"
   })
