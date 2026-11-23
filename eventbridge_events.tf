@@ -16,7 +16,7 @@ resource "aws_cloudwatch_event_archive" "bus_archive" {
   name             = "${var.project_name}-bus-archive"
   event_source_arn = aws_cloudwatch_event_bus.app_bus.arn
   retention_days   = 30
-  description      = "30-day event replay archive for ${var.project_name}"
+  description      = "30-day transactional event replay archive for disaster recovery and auditing"
 }
 
 # CloudWatch Log Group for auditing routed event patterns
