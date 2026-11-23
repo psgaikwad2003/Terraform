@@ -4,8 +4,9 @@
 
 # REST API
 resource "aws_api_gateway_rest_api" "main_api" {
-  name        = "${var.project_name}-rest-api"
-  description = "REST API gateway for serverless services"
+  name                     = "${var.project_name}-rest-api"
+  description              = "REST API gateway for serverless services"
+  minimum_compression_size = 1024
 
   endpoint_configuration {
     types = ["REGIONAL"]
