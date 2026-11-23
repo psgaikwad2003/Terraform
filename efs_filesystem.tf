@@ -65,4 +65,8 @@ resource "aws_efs_access_point" "app_data" {
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-efs-access-point"
   })
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-efs-access-point"
+  })
 }
