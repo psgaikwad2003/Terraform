@@ -168,7 +168,7 @@ resource "aws_db_instance" "primary" {
   instance_class        = var.db_instance_class
   allocated_storage     = var.db_allocated_storage
   max_allocated_storage = 500
-  storage_type          = "gp3"
+  storage_type          = var.rds_storage_type
   storage_encrypted     = true
   kms_key_id            = aws_kms_key.rds.arn
 
