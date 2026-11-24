@@ -215,6 +215,7 @@ resource "aws_codepipeline" "app_pipeline" {
       provider         = "S3"
       version          = "1"
       output_artifacts = ["source_output"]
+      run_order        = 1
 
       configuration = {
         S3Bucket    = aws_s3_bucket.pipeline_artifacts.bucket
