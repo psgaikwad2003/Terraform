@@ -33,10 +33,11 @@ resource "aws_secretsmanager_secret_version" "db_credentials" {
 
 # 2. Third-Party API Keys Secret
 resource "aws_secretsmanager_secret" "api_keys" {
-  name                    = "${var.project_name}/app/api-keys"
-  description             = "Third-party external service API keys"
-  kms_key_id              = aws_kms_key.storage_key.arn
-  recovery_window_in_days = 7
+  name                            = "${var.project_name}/app/api-keys"
+  description                     = "Third-party external service API keys"
+  kms_key_id                      = aws_kms_key.storage_key.arn
+  recovery_window_in_days         = 7
+  force_overwrite_replica_secret  = false
 
   tags = merge(local.common_tags, {
     Name = "${var.project_name}-api-keys"
