@@ -115,6 +115,12 @@ terraform apply
 - **Pre-commit Hooks**: Enforces trailing whitespace cleanup, JSON/YAML linting, and automated `terraform fmt` prior to commit creation.
 - **Example Variable Configuration**: `terraform.tfvars.example` provides a documented baseline for environment customization.
 
+## Governance & Compliance Updates (24 Nov)
+
+- **Root Account Protection**: Continuous AWS Config governance rule enforcing Multi-Factor Authentication (MFA) on root accounts.
+- **Log Stream Cryptography**: Multi-region CloudTrail audit log groups encrypted with customer managed CMKs.
+- **Orchestration Execution Ordering**: CodePipeline stages explicitly numbered with `run_order` sequences to prevent stage drift.
+
 ## Infrastructure Resiliency Updates (23 Nov)
 
 - **Database Performance Tuning**: PostgreSQL configured with 60-second idle transaction timeout to eliminate idle connection lock contention.
