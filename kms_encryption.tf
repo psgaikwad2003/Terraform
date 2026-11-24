@@ -4,9 +4,10 @@
 
 # KMS Key for General Storage & Object Encryption
 resource "aws_kms_key" "storage_key" {
-  description             = "Customer managed key for ${var.project_name} storage encryption"
-  deletion_window_in_days = var.kms_deletion_window_days
-  enable_key_rotation     = true
+  description                         = "Customer managed key for ${var.project_name} storage encryption"
+  deletion_window_in_days             = var.kms_deletion_window_days
+  enable_key_rotation                 = true
+  bypass_policy_lockout_safety_check = false
 
   policy = jsonencode({
     Version = "2012-10-17"
