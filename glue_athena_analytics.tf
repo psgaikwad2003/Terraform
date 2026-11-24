@@ -52,6 +52,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "datalake_lifecycle" {
 resource "aws_glue_catalog_database" "analytics_db" {
   name        = "${replace(var.project_name, "-", "_")}_analytics_db"
   description = "Central data catalog database for application analytics"
+
+  parameters = {
+    "classification" = "parquet"
+  }
 }
 
 # IAM Role for AWS Glue Crawler
