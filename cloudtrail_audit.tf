@@ -76,6 +76,7 @@ resource "aws_s3_bucket_policy" "cloudtrail_bucket_policy" {
 resource "aws_cloudwatch_log_group" "cloudtrail_logs" {
   name              = "/aws/cloudtrail/${var.project_name}-security-events"
   retention_in_days = 90
+  kms_key_id        = aws_kms_key.storage_key.arn
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-cloudtrail-loggroup"
