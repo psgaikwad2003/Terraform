@@ -32,8 +32,8 @@ resource "aws_cognito_user_pool" "main" {
 
   verification_message_template {
     default_email_option = "CONFIRM_WITH_CODE"
-    email_subject        = "Your Verification Code"
-    email_message        = "Welcome! Your verification code is {####}."
+    email_subject        = "Your Secure Verification Code"
+    email_message        = "Welcome! Your one-time verification security code is {####}."
   }
 
   schema {
