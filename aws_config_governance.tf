@@ -185,3 +185,18 @@ resource "aws_config_config_rule" "efs_encrypted_check" {
   tags = local.common_tags
 }
 
+# Compliance Rule: Ensure IAM root account has MFA enabled
+resource "aws_config_config_rule" "root_account_mfa" {
+  name        = "${var.project_name}-root-account-mfa"
+  description = "Checks whether the root user has MFA enabled"
+
+  source {
+    owner             = "AWS"
+    source_identifier = "ROOT_ACCOUNT_MFA_ENABLED"
+  }
+
+  depends_on = [aws_config_configuration_recorder_status.main]
+
+  tags = local.common_tags
+}
+
