@@ -80,7 +80,8 @@ resource "aws_route_table" "public_rt" {
   }
 
   tags = {
-    Name = "${var.project_name}-public-rt"
+    Name        = "${var.project_name}-public-rt"
+    Description = "Public routing table directing default egress to Internet Gateway"
   }
 }
 
