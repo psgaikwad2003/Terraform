@@ -91,6 +91,8 @@ resource "aws_codebuild_project" "app_build" {
     type = "CODEPIPELINE"
   }
 
+  queued_timeout = 60
+
   environment {
     compute_type                = "BUILD_GENERAL1_SMALL"
     image                       = "aws/codebuild/standard:7.0"
@@ -101,6 +103,11 @@ resource "aws_codebuild_project" "app_build" {
     environment_variable {
       name  = "ENVIRONMENT"
       value = var.environment
+    }
+
+    environment_variable {
+      name  = "PROJECT_NAME"
+      value = var.project_name
     }
   }
 
