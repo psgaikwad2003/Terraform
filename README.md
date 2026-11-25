@@ -115,6 +115,14 @@ terraform apply
 - **Pre-commit Hooks**: Enforces trailing whitespace cleanup, JSON/YAML linting, and automated `terraform fmt` prior to commit creation.
 - **Example Variable Configuration**: `terraform.tfvars.example` provides a documented baseline for environment customization.
 
+## Operational Hardening & Architecture Updates
+
+- **High-Resolution Network Auditing**: VPC Flow Logs configured with 1-minute aggregation intervals for rapid anomaly detection.
+- **Resilient Compute Lifecycle**: ECS Fargate services equipped with automated deployment circuit breakers and rollback capabilities.
+- **Enterprise Cryptographic Enforcement**: Customer Managed Keys (CMK) configured across DynamoDB tables, Kinesis streams, S3 storage, and RDS.
+- **Modern Edge Ingress**: CloudFront CDN updated with HTTP/3 support alongside strict HSTS and Content-Security-Policy headers.
+- **Zero-Trust IAM Governance**: CI/CD OIDC roles tuned with 2-hour maximum session lifetimes and least-privilege policies.
+
 ## Security & Reliability Highlights
 - **Identity & Access Management**: Amazon Cognito User Pool with 12+ char password enforcement, verification emails, and federated identity pools.
 - **Perimeter Defense**: AWS WAFv2 Web ACL safeguarding both EC2 fleet and ECS container Application Load Balancers against OWASP Top 10 exploits, DDoS attacks, and GeoMatch geographical filtering with custom JSON block responses.
