@@ -4,9 +4,10 @@
 
 # Public Application Load Balancer Security Group
 resource "aws_security_group" "alb_sg" {
-  name        = "${var.project_name}-alb-sg"
-  description = "Security group for public Application Load Balancer"
-  vpc_id      = aws_vpc.main.id
+  name                   = "${var.project_name}-alb-sg"
+  description            = "Security group for public Application Load Balancer"
+  revoke_rules_on_delete = true
+  vpc_id                 = aws_vpc.main.id
 
   ingress {
     description = "Allow inbound HTTP"
@@ -39,9 +40,10 @@ resource "aws_security_group" "alb_sg" {
 
 # Web Tier Security Group
 resource "aws_security_group" "web_sg" {
-  name        = "${var.project_name}-web-sg"
-  description = "Security group for application web servers"
-  vpc_id      = aws_vpc.main.id
+  name                   = "${var.project_name}-web-sg"
+  description            = "Security group for application web servers"
+  revoke_rules_on_delete = true
+  vpc_id                 = aws_vpc.main.id
 
   ingress {
     description     = "HTTP traffic from ALB"
