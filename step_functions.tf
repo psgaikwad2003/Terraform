@@ -68,6 +68,7 @@ resource "aws_iam_role_policy" "sfn_policy" {
 resource "aws_sfn_state_machine" "order_workflow" {
   name     = "${var.project_name}-order-processing-workflow"
   role_arn = aws_iam_role.sfn_execution_role.arn
+  type     = "STANDARD"
 
   definition = jsonencode({
     Comment = "Enterprise Order Fulfillment and Transaction Workflow"
