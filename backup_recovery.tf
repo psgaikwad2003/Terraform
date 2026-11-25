@@ -74,9 +74,10 @@ resource "aws_backup_plan" "production_plan" {
   name = "${var.project_name}-production-backup-plan"
 
   rule {
-    rule_name         = "daily-retained-30-days"
-    target_vault_name = aws_backup_vault.main.name
-    schedule          = "cron(0 5 ? * * *)" # Daily at 5:00 UTC
+    rule_name                = "daily-retained-30-days"
+    target_vault_name        = aws_backup_vault.main.name
+    schedule                 = "cron(0 5 ? * * *)" # Daily at 5:00 UTC
+    enable_continuous_backup = true
 
     lifecycle {
       delete_after = 30
