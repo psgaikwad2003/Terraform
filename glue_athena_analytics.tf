@@ -123,6 +123,7 @@ resource "aws_glue_crawler" "data_crawler" {
 resource "aws_athena_workgroup" "analytics_workgroup" {
   name        = "${var.project_name}-athena-workgroup"
   description = "Workgroup enforcing encryption and query cost controls"
+  state       = "ENABLED"
 
   configuration {
     enforce_workgroup_configuration    = true
