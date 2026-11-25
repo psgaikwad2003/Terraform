@@ -94,8 +94,9 @@ resource "aws_iam_group_policy_attachment" "developers" {
 
 # 2. CI/CD Deployment Role (GitHub Actions OIDC)
 resource "aws_iam_role" "cicd_role" {
-  name        = "${var.project_name}-cicd-role"
-  description = "Role assumed by CI/CD pipeline"
+  name                 = "${var.project_name}-cicd-role"
+  description          = "Role assumed by CI/CD pipeline"
+  max_session_duration = 7200
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
