@@ -132,6 +132,8 @@ resource "aws_cloudtrail" "main" {
 
   cloud_watch_logs_group_arn = "${aws_cloudwatch_log_group.cloudtrail_logs.arn}:*"
   cloud_watch_logs_role_arn  = aws_iam_role.cloudtrail_cw_role.arn
+  enable_logging             = true
+  is_organization_trail      = false
 
   depends_on = [aws_s3_bucket_policy.cloudtrail_bucket_policy]
 
