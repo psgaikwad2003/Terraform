@@ -17,8 +17,9 @@ resource "aws_kinesis_stream" "events_stream" {
     "WriteProvisionedThroughputExceeded"
   ]
 
-  encryption_type = "KMS"
-  kms_key_id      = aws_kms_key.storage_key.arn
+  encryption_type           = "KMS"
+  kms_key_id                = aws_kms_key.storage_key.arn
+  enforce_consumer_deletion = false
 
   stream_mode_details {
     stream_mode = "PROVISIONED"
