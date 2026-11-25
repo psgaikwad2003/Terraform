@@ -69,6 +69,7 @@ resource "aws_cloudfront_response_headers_policy" "security_headers" {
 resource "aws_cloudfront_distribution" "main_cdn" {
   enabled             = true
   is_ipv6_enabled     = true
+  http_version        = "http2and3"
   comment             = "${var.project_name} Main CDN distribution"
   default_root_object = "index.html"
   price_class         = "PriceClass_100"
