@@ -41,10 +41,12 @@ resource "aws_ssm_parameter" "redis_host" {
 
 # Maintenance window for scheduled operating system patching
 resource "aws_ssm_maintenance_window" "weekly_patching" {
-  name     = "${var.project_name}-weekly-patch-window"
-  schedule = "cron(0 2 ? * SUN *)" # Sunday 2:00 AM UTC
-  duration = 3
-  cutoff   = 1
+  name        = "${var.project_name}-weekly-patch-window"
+  description = "Weekly scheduled automated security patching maintenance window"
+  enabled     = true
+  schedule    = "cron(0 2 ? * SUN *)" # Sunday 2:00 AM UTC
+  duration    = 3
+  cutoff      = 1
 
   allow_unassociated_targets = true
 
