@@ -47,6 +47,7 @@ resource "aws_route53_record" "efs_internal" {
 resource "aws_acm_certificate" "app_cert" {
   domain_name       = "api.${var.project_name}.com"
   validation_method = "DNS"
+  key_algorithm     = "RSA_2048"
 
   subject_alternative_names = [
     "*.${var.project_name}.com"
