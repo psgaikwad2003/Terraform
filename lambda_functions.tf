@@ -64,6 +64,10 @@ resource "aws_lambda_function" "get_items" {
   architectures    = ["arm64"]
   timeout          = 30
   memory_size      = 256
+
+  ephemeral_storage {
+    size = 512
+  }
   filename         = "${path.module}/lambda_payload.zip"
   source_code_hash = filebase64sha256("${path.module}/lambda_payload.zip")
 
@@ -92,6 +96,10 @@ resource "aws_lambda_function" "create_item" {
   architectures    = ["arm64"]
   timeout          = 30
   memory_size      = 256
+
+  ephemeral_storage {
+    size = 512
+  }
   filename         = "${path.module}/lambda_payload.zip"
   source_code_hash = filebase64sha256("${path.module}/lambda_payload.zip")
 
