@@ -150,10 +150,11 @@ resource "aws_iam_role_policy" "flow_log_policy" {
 }
 
 resource "aws_flow_log" "vpc_flow_log" {
-  iam_role_arn    = aws_iam_role.flow_log_role.arn
-  log_destination = aws_cloudwatch_log_group.vpc_flow_logs.arn
-  traffic_type    = "ALL"
-  vpc_id          = aws_vpc.main.id
+  iam_role_arn             = aws_iam_role.flow_log_role.arn
+  log_destination          = aws_cloudwatch_log_group.vpc_flow_logs.arn
+  traffic_type             = "ALL"
+  max_aggregation_interval = 60
+  vpc_id                   = aws_vpc.main.id
 
   tags = {
     Name = "${var.project_name}-flow-logs"
