@@ -76,6 +76,7 @@ resource "aws_cloudwatch_metric_alarm" "high_cpu" {
   alarm_description   = "EC2 ASG CPU utilization exceeded ${var.cpu_alarm_threshold}%"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 3
+  datapoints_to_alarm = 2
   metric_name         = "CPUUtilization"
   namespace           = "AWS/EC2"
   period              = 60
@@ -155,6 +156,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_cpu" {
   alarm_description   = "RDS CPU utilization > ${var.rds_cpu_threshold}%"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 3
+  datapoints_to_alarm = 2
   metric_name         = "CPUUtilization"
   namespace           = "AWS/RDS"
   period              = 60
