@@ -115,6 +115,12 @@ terraform apply
 - **Pre-commit Hooks**: Enforces trailing whitespace cleanup, JSON/YAML linting, and automated `terraform fmt` prior to commit creation.
 - **Example Variable Configuration**: `terraform.tfvars.example` provides a documented baseline for environment customization.
 
+## Reliability & Compute Tuning Updates (26–27 Nov)
+
+- **Alarm Sensitivity Calibration**: CloudWatch alarms configured with `datapoints_to_alarm` evaluation windows to mitigate false positive alerts.
+- **Serverless Compute Tuning**: Ephemeral scratch disk storage explicitly defined on serverless execution environments.
+- **Root Block Cryptography**: EC2 launch templates enforced with customer managed KMS encryption on primary root EBS volumes.
+
 ## Governance & Compliance Updates (24 Nov)
 
 - **Root Account Protection**: Continuous AWS Config governance rule enforcing Multi-Factor Authentication (MFA) on root accounts.
